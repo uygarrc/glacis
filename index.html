@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Glacis</title>
+<meta name="description" content="Glacis reads the skin temperature of your fingertips and tells you, calmly and early, when the cold is winning.">
+<meta name="theme-color" content="#F4FAFC">
+<meta property="og:title" content="Glacis">
+<meta property="og:description" content="Stay out longer. A frostbite-early-warning wearable for people who work and perform at minus forty.">
+<meta property="og:image" content="/thermal.jpg">
+<link rel="icon" type="image/svg+xml" href="/symbol.svg">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&family=IBM+Plex+Mono:wght@300;400;500&display=swap">
+<style>
+/* Layout: one day in the cold. Hero (thermal field) → the field drains of colour as skin temperature falls (scroll) → three live instrument windows → a full thermal-camera hand you can cool → frost grows over a giant −40° → back to the thermal field for field trials. Every visual is the same thermal language: dust → teal → turquoise → chalk, orange only for risk. */
+:root{
+  --surface:#F4FAFC; --surface-raised:#FFFFFF; --surface-sunken:#E4F2F6;
+  --ink:#262D35; --ink-muted:#4F5B66; --hairline:#C3D3DB;
+  --brand:#5CC2DA; --brand-frost:#C9E6EE; --brand-deep:#1D5C78; --dust:#262D35;
+  --action:#1D5C78; --action-hover:#133F55; --on-action:#F4FAFC; --focus:#1D5C78;
+  --caution:#F2B84B; --alert:#FF8A5B; --risk:#C2410C;
+  --night:#0B1116; --night-raised:#111920; --night-ink:#E4F2F6; --night-muted:#9DB0BC; --night-line:#22303A; --night-accent:#8FD3E4;
+  --f-display:"Inter Tight","Helvetica Neue",Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --gut:max(16px,env(safe-area-inset-left,0px)); --gut-r:max(16px,env(safe-area-inset-right,0px));
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --surface:#11191F; --surface-raised:#161F27; --surface-sunken:#0E1419; --ink:#E4F2F6; --ink-muted:#9DB0BC; --hairline:#2B3843;
+  --brand-frost:#1F3A47; --brand-deep:#8FD3E4; --action:#5CC2DA; --action-hover:#8FD3E4; --on-action:#0E1419; --focus:#8FD3E4; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --surface:#11191F; --surface-raised:#161F27; --surface-sunken:#0E1419; --ink:#E4F2F6; --ink-muted:#9DB0BC; --hairline:#2B3843;
+  --brand-frost:#1F3A47; --brand-deep:#8FD3E4; --action:#5CC2DA; --action-hover:#8FD3E4; --on-action:#0E1419; --focus:#8FD3E4; color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--surface);color:var(--ink);font:400 16px/24px var(--f-display);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:var(--brand-deep)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.in{max-width:1200px;margin:0 auto;padding-left:var(--gut);padding-right:var(--gut-r)}
+@media (min-width:900px){.in{padding-left:max(32px,env(safe-area-inset-left,0px));padding-right:max(32px,env(safe-area-inset-right,0px))}}
+.label{font:500 12px/16px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;font-variant-numeric:tabular-nums}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
+h2{font-weight:400;font-size:clamp(34px,5vw,64px);line-height:1.02;letter-spacing:-.035em}
+h3{font-weight:500;font-size:20px;line-height:1.3;letter-spacing:-.01em}
+.lead{font-size:18px;line-height:28px;color:var(--ink-muted);max-width:52ch;margin:0}
+.btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:12px 20px;border-radius:4px;font:500 15px var(--f-display);text-decoration:none;border:1px solid transparent;cursor:pointer;transition:background .15s ease,border-color .15s ease}
+.btn.primary{background:var(--action);color:var(--on-action)}
+.btn.primary:hover{background:var(--action-hover)}
+.btn.ghost{border-color:var(--ink-muted);color:var(--ink);background:transparent}
+.btn.ghost:hover{background:var(--brand-frost)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.marker{display:flex;align-items:center;gap:12px;color:var(--brand-deep)}
+.marker::before{content:"";width:9px;height:9px;border-radius:50%;border:1.5px solid currentColor;flex:none}
+.marker::after{content:"";height:1px;flex:1;max-width:120px;background:currentColor;opacity:.4}
+.marker .sep{opacity:.45;margin-inline:2px}
+/* ---------- nav ---------- */
+.nav{position:absolute;inset:0 0 auto;z-index:5}
+.nav .in{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:20px}
+.nav img{height:34px;width:auto;display:block}
+.nav ul{display:flex;gap:24px;list-style:none;margin:0;padding:0}
+.nav ul a{color:#262D35;text-decoration:none;font-weight:500;font-size:15px}
+.nav ul a:hover{text-decoration:underline;text-underline-offset:4px}
+@media (max-width:760px){.nav ul{display:none}}
+
+/* ---------- hero: the thermal field (unchanged) ---------- */
+.hero{position:relative;min-height:min(820px,100svh);display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;background:#cfe8f0;color:#262D35;isolation:isolate}
+.field{position:absolute;inset:-6%;z-index:-2;background:url(thermal.jpg) center/cover no-repeat;animation:fold 38s ease-in-out infinite alternate}
+@media (max-width:700px){.field{background-image:url(thermal-portrait.jpg)}}
+@keyframes fold{0%{transform:scale(1.02) translate(0,0) rotate(0)}50%{transform:scale(1.09) translate(-1.5%,1%) rotate(.6deg)}100%{transform:scale(1.05) translate(1.5%,-1%) rotate(-.4deg)}}
+.hero::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(244,250,252,.55) 0%,rgba(244,250,252,0) 22%,rgba(244,250,252,0) 45%,rgba(244,250,252,.82) 78%,rgba(244,250,252,.95) 100%)}
+.hero .hero-body{width:100%;padding-block:140px 40px;display:grid;gap:28px}
+.hero h1{font-weight:500;font-size:clamp(48px,8vw,96px);line-height:1;letter-spacing:-.035em;color:#262D35}
+.hero .lead{color:#33404b;max-width:52ch}
+.hero .ctas{display:flex;flex-wrap:wrap;gap:16px}
+.hero .btn.primary{background:#1D5C78;color:#F4FAFC}.hero .btn.primary:hover{background:#133F55}
+.hero .btn.ghost{border-color:#4F5B66;color:#262D35}.hero .btn.ghost:hover{background:rgba(201,230,238,.7)}
+.readouts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;border-top:1px solid rgba(38,45,53,.25);padding-top:16px;color:#262D35}
+.readouts div{display:grid;gap:4px}
+.readouts b{font:500 22px var(--f-mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.readouts .label{color:#4F5B66}
+.pulse{display:inline-block;width:7px;height:7px;border-radius:50%;background:#1D5C78;margin-right:8px;vertical-align:1px;animation:beat 2s ease-in-out infinite}
+@keyframes beat{50%{opacity:.25}}
+@media (max-width:700px){.readouts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ============ 1 · numb: the field drains as skin temperature falls ============ */
+.numb{position:relative;height:300vh;background:var(--night)}
+.numb .stick{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;isolation:isolate;--p:0}
+.numb .bg{position:absolute;inset:-4%;z-index:-2;background:url(thermal.jpg) center/cover no-repeat;
+  filter:saturate(calc(1 - var(--p)*.92)) brightness(calc(1 - var(--p)*.8)) contrast(calc(1 + var(--p)*.25));
+  transform:scale(calc(1.05 + var(--p)*.12));will-change:filter,transform}
+@media (max-width:700px){.numb .bg{background-image:url(thermal-portrait.jpg)}}
+.numb .stick::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(11,17,22,0) 30%,rgba(11,17,22,.85) 100%);opacity:calc(.35 + var(--p)*.65)}
+.numb .in{height:100%;display:grid;grid-template-rows:auto 1fr auto;padding-block:clamp(72px,10vh,120px) clamp(40px,7vh,72px)}
+.numb .marker{color:var(--tone,#1D5C78)}
+.numb .marker,.temp,.lines p,.numb .read .label{transition:color .6s ease,text-shadow .6s ease}
+.numb .stick.dark .temp,.numb .stick.dark .lines p{text-shadow:0 2px 30px rgba(11,17,22,.45)}
+.numb .read{align-self:center;display:grid;gap:6px}
+.numb .read .label{color:var(--tone,#262D35);opacity:.8}
+.temp{font:300 clamp(88px,19vw,260px)/.9 var(--f-mono);font-variant-numeric:tabular-nums;letter-spacing:-.05em;color:var(--tone,#262D35);white-space:nowrap}
+.temp small{font-size:.32em;letter-spacing:-.02em;margin-left:.08em;vertical-align:.95em}
+.lines{position:relative;min-height:3.4em;font-size:clamp(28px,4.4vw,56px);line-height:1.05;letter-spacing:-.035em;font-weight:400}
+.lines p{position:absolute;left:0;bottom:0;margin:0;max-width:16ch;color:var(--tone,#262D35);opacity:0;transform:translateY(16px);transition:opacity .5s ease,transform .5s ease}
+.lines p.on{opacity:1;transform:none}
+.lines p.first{color:var(--tone,#262D35)}
+.risk{justify-self:start;display:inline-flex;align-items:center;gap:8px;margin-top:14px;border-radius:999px;padding:6px 14px;background:var(--risk);color:#fff;font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;opacity:0;transition:opacity .4s ease}
+.risk.on{opacity:1}
+.risk::before{content:"";width:6px;height:6px;border-radius:50%;background:#fff;animation:beat 1.2s ease-in-out infinite}
+.facts{background:var(--night);color:var(--night-ink)}
+.facts .in{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px;padding-block:72px 120px}
+.facts .f{display:grid;gap:10px;border-top:1px solid var(--night-line);padding-top:20px;align-content:start}
+.facts b{font:300 clamp(44px,5vw,64px)/1 var(--f-mono);letter-spacing:-.04em;color:var(--night-accent)}
+.facts span{color:var(--night-muted);font-size:15px;line-height:22px}
+.facts a{color:var(--night-accent);font-size:13px}
+@media (max-width:820px){.facts .in{grid-template-columns:1fr}}
+.thaw{height:clamp(120px,16vw,220px);background:linear-gradient(180deg,var(--night),var(--surface))}
+
+/* ============ 2 · how: three live instrument windows ============ */
+.how{padding-block:72px 128px}
+.how .head{display:grid;gap:20px;max-width:760px;margin-bottom:56px}
+.windows{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.win{display:grid;gap:18px;align-content:start;min-width:0}
+.scope{position:relative;aspect-ratio:4/5;max-width:100%;border-radius:6px;overflow:hidden;background:var(--night);color:var(--night-ink)}
+.scope canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.scope .cap{position:absolute;left:14px;right:14px;top:12px;display:flex;justify-content:space-between;gap:8px;color:var(--night-muted);font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;z-index:2}
+.scope .cap b{color:var(--night-ink);font-weight:500}
+.dot{position:absolute;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;border:1.5px solid #E4F2F6;z-index:2}
+.dot::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:1px solid #E4F2F6;opacity:0;animation:ping 2.4s ease-out infinite}
+@keyframes ping{0%{transform:scale(.4);opacity:.9}100%{transform:scale(1.6);opacity:0}}
+.big-read{position:absolute;left:14px;bottom:14px;font:300 40px/1 var(--f-mono);letter-spacing:-.03em;z-index:2;font-variant-numeric:tabular-nums}
+/* warn window: the band itself */
+.band{position:absolute;inset:0;display:grid;place-items:center}
+.face{position:relative;width:46%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 50% 40%,#1A2731,#0E161C 70%);border:1px solid #2B3843;display:grid;place-items:center;transition:transform .1s}
+.face .word{font:500 clamp(15px,1.6vw,20px) var(--f-display);letter-spacing:-.01em;color:var(--night-accent);transition:color .3s}
+.face .led{position:absolute;top:16%;width:6px;height:6px;border-radius:50%;background:var(--night-accent);box-shadow:0 0 12px var(--night-accent);transition:background .3s,box-shadow .3s}
+.ring{position:absolute;width:46%;aspect-ratio:1;border-radius:50%;border:1px solid var(--caution);opacity:0}
+.scope.buzz .ring{animation:wave 1.8s ease-out infinite}.scope.buzz .ring:nth-child(2){animation-delay:.6s}.scope.buzz .ring:nth-child(3){animation-delay:1.2s}
+@keyframes wave{0%{transform:scale(1);opacity:.7}100%{transform:scale(2.1);opacity:0}}
+.scope.buzz .face{animation:shake .5s linear infinite}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-1.5px)}75%{transform:translateX(1.5px)}}
+.scope.buzz .word{color:var(--caution)}.scope.buzz .led{background:var(--caution);box-shadow:0 0 14px var(--caution)}
+.sentence{position:absolute;left:14px;right:14px;bottom:14px;font-size:14px;line-height:20px;color:var(--night-ink);z-index:2;min-height:40px}
+.win .label{color:var(--brand-deep)}
+.win p{margin:0;color:var(--ink-muted);max-width:36ch}
+@media (max-width:900px){.windows{grid-template-columns:1fr;max-width:460px}}
+
+/* ============ 3 · live: the thermal-camera hand ============ */
+.live{background:var(--night);color:var(--night-ink);padding-block:128px 0;position:relative}
+.live .head{display:grid;gap:20px;max-width:760px}
+.live .marker{color:var(--night-accent)}
+.live .lead{color:var(--night-muted)}
+.rig{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:48px;margin-top:48px;align-items:center}
+.cam{position:relative;aspect-ratio:9/11;max-width:100%;width:100%;max-height:78vh;justify-self:center;border-radius:6px;overflow:hidden;background:#0B1116}
+.cam canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.cam .cap{position:absolute;left:16px;right:40px;bottom:14px;display:flex;justify-content:space-between;color:var(--night-muted);font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;z-index:2}
+.cam .scale{position:absolute;right:16px;top:24px;bottom:16px;width:8px;border-radius:2px;background:linear-gradient(0deg,#0E1419,#262D35 20%,#1D5C78 42%,#5CC2DA 66%,#C9E6EE 86%,#F4FAFC);z-index:2}
+.cam .scale i{position:absolute;right:14px;font:500 10px var(--f-mono);font-style:normal;color:var(--night-muted);white-space:nowrap}
+.tag{position:absolute;z-index:3;transform:translate(-50%,-100%);display:grid;justify-items:center;gap:4px;pointer-events:none}
+.tag b{font:500 13px var(--f-mono);font-variant-numeric:tabular-nums;color:#F4FAFC;background:rgba(11,17,22,.55);padding:2px 6px;border-radius:3px;backdrop-filter:blur(4px)}
+.tag i{width:14px;height:14px;border:1.5px solid #F4FAFC;border-radius:50%;transform:translateY(50%)}
+.tag.watch b{color:var(--caution)}.tag.watch i{border-color:var(--caution)}
+.tag.alert b{background:var(--risk);color:#fff}.tag.alert i{border-color:var(--alert);animation:beat 1s infinite}
+.side{display:grid;gap:28px;align-content:center;min-width:0}
+.status{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.status .label{color:var(--night-muted)}
+.bigt{font:300 64px/1 var(--f-mono);font-variant-numeric:tabular-nums;letter-spacing:-.04em}
+.bigt small{font-size:14px;color:var(--night-muted);margin-left:8px;letter-spacing:0}
+.pill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:6px 14px;font:500 13px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;border:1px solid currentColor}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.normal{color:var(--night-accent)}.pill.watch{color:var(--caution)}
+.pill.alert{background:var(--risk);color:#fff;border-color:var(--risk);animation:beat 1.2s ease-in-out infinite}
+.msg{min-height:52px;margin:0;font-size:19px;line-height:26px;max-width:36ch}
+.spark{width:100%;height:64px;display:block}
+.ctrl{display:grid;gap:8px}
+.ctrl .row{display:flex;justify-content:space-between;gap:12px}
+.ctrl .label{color:var(--night-muted)}
+.ctrl output{font:500 14px var(--f-mono);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:#5CC2DA;height:28px}
+.seg{display:flex;border:1px solid var(--night-line);border-radius:4px;overflow:hidden}
+.seg button{flex:1;min-height:44px;background:transparent;border:0;color:var(--night-muted);font:500 14px var(--f-display);cursor:pointer}
+.seg button[aria-pressed="true"]{background:#1F3A47;color:var(--night-ink)}
+.play{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.play .btn.primary{background:#5CC2DA;color:#0B1116}.play .btn.primary:hover{background:#8FD3E4}
+.play .btn.ghost{border-color:#5B6C78;color:#E4F2F6}.play .btn.ghost:hover{background:#1F3A47}
+.clock{font:500 14px var(--f-mono);color:var(--night-muted)}
+.note{font-size:13px;line-height:19px;color:var(--night-muted);margin:0}
+@media (max-width:900px){.rig{grid-template-columns:1fr;gap:32px}.cam{max-height:none;max-width:460px}}
+
+/* ============ 4 · specs: frost grows over −40 ============ */
+.specs{position:relative;background:var(--night);color:var(--night-ink);overflow:hidden;isolation:isolate}
+.specs canvas.frost{position:absolute;inset:0;width:100%;height:100%;z-index:-1}
+.specs .in{padding-block:160px 140px;display:grid;grid-template-columns:minmax(0,6fr) minmax(0,5fr);gap:56px;align-items:end}
+.minus{font:300 clamp(120px,24vw,340px)/.82 var(--f-display);letter-spacing:-.07em;margin:0 0 24px -.04em;
+  background:url(thermal.jpg) 30% 40%/cover;-webkit-background-clip:text;background-clip:text;color:transparent;filter:saturate(1.1)}
+.specs .marker{color:var(--night-accent);margin-bottom:20px}
+.specs .lead{color:var(--night-muted)}
+.specs dl{margin:0;display:grid;background:rgba(11,17,22,.6);backdrop-filter:blur(6px);border:1px solid var(--night-line);border-radius:6px;padding:4px 20px}
+.specs .r{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:16px;padding:14px 0;border-bottom:1px solid var(--night-line)}
+.specs .r:last-child{border-bottom:0}
+.specs dt{font:500 11px/22px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--night-muted)}
+.specs dd{margin:0;font:400 15px/22px var(--f-mono);font-variant-numeric:tabular-nums}
+.small{font-size:13px;line-height:20px;color:var(--night-muted);margin:12px 0 0}
+@media (max-width:900px){.specs .in{grid-template-columns:1fr;padding-block:112px 96px}}
+
+/* ============ 5 · field trials ============ */
+.trials{position:relative;overflow:hidden;background:#cfe8f0;color:#262D35;isolation:isolate}
+.trials .field{animation-duration:46s}
+.trials::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,#0B1116 0%,rgba(11,17,22,0) 34%),rgba(244,250,252,.62)}
+.trials .in{padding-block:clamp(220px,26vw,320px) 120px}
+.trials .marker{color:#1D5C78}
+.trials .box{max-width:640px;display:grid;gap:20px}
+.trials h2{color:#262D35}
+.trials p{margin:0;color:#33404b;font-size:18px;line-height:28px}
+.mail{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:8px}
+.mail code{font:500 15px var(--f-mono);background:#FFFFFF;border:1px solid #C3D3DB;border-radius:4px;padding:11px 14px;color:#262D35;user-select:all}
+.trials .btn.primary{background:#1D5C78;color:#F4FAFC}.trials .btn.primary:hover{background:#133F55}
+.trials .who{font-size:15px;line-height:22px;color:#4F5B66}
+footer{background:var(--dust);color:#E4F2F6}
+footer .in{padding-block:48px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:24px;align-items:end}
+footer img{height:40px;width:auto;display:block}
+footer p{margin:0;color:#9DB0BC;font-size:14px;line-height:20px;max-width:52ch}
+footer .label{color:#9DB0BC}
+
+/* ---------- intro: white page, the isotherm breathing, one click ---------- */
+body.locked{overflow:hidden}
+.intro[hidden]{display:none!important}
+.intro{position:fixed;inset:0;z-index:50;background:#F4FAFC;display:grid;place-items:center;cursor:pointer;border:0;padding:0;width:100%;color:#262D35;font:inherit}
+.grow{position:fixed;inset:0;z-index:60;pointer-events:none;background:url(thermal.jpg) no-repeat;
+  -webkit-mask-image:url(symbol.svg);mask-image:url(symbol.svg);-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
+@media (max-width:700px){.grow{background-image:url(thermal-portrait.jpg)}}
+.intro-ghost{position:fixed;z-index:61;pointer-events:none;transform-origin:50% 50%;will-change:transform,opacity;mix-blend-mode:multiply}
+.intro .mark{position:relative;display:grid;justify-items:center;gap:28px;transform:translateY(-4vh)}
+.intro .sym{width:clamp(110px,16vw,170px);height:auto;animation:breathe 5s ease-in-out infinite;will-change:transform}
+@keyframes breathe{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.05) rotate(4deg)}}
+.intro .hint{font:500 12px/16px var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:#4F5B66;display:flex;align-items:center;gap:10px;transition:opacity .3s}
+.intro .hint i{width:7px;height:7px;border-radius:50%;background:#5CC2DA;animation:beat 1.6s ease-in-out infinite}
+.intro .corner{position:absolute;font:500 11px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:#4F5B66}
+.intro .tl{left:max(24px,env(safe-area-inset-left,0px));top:24px}.intro .br{right:max(24px,env(safe-area-inset-right,0px));bottom:24px;text-align:right}
+.intro:focus-visible{outline:none}.intro:focus-visible .sym{outline:2px solid #1D5C78;outline-offset:12px;border-radius:50%}
+.intro.go{cursor:default}
+.intro.go .hint,.intro.go .corner{opacity:0}
+body.entered .hero-body > *{animation:rise .9s cubic-bezier(.2,.7,.2,1) both}
+body.entered .hero-body > *:nth-child(2){animation-delay:.08s}body.entered .hero-body > *:nth-child(3){animation-delay:.16s}
+body.entered .hero-body > *:nth-child(4){animation-delay:.24s}body.entered .hero-body > *:nth-child(5){animation-delay:.32s}
+body.entered .nav{animation:rise .9s .2s cubic-bezier(.2,.7,.2,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.intro .sym,.intro .hint i{animation:none}body.entered .hero-body > *,body.entered .nav{animation:none}}
+.replay{min-height:44px;padding:10px 16px;border:1px solid #4F5B66;border-radius:4px;background:transparent;color:#E4F2F6;font:500 12px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+.replay:hover{background:#1F3A47}
+.replay:focus-visible{outline:2px solid #8FD3E4;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){
+  .field,.pulse,.pill.alert,.dot::after,.risk::before{animation:none}
+  .numb{height:auto}.numb .stick{position:relative;height:auto;min-height:100svh}
+  .lines{min-height:0}.lines p{position:static;opacity:1;transform:none;margin-bottom:8px}
+  html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<button class="intro" id="intro" type="button" aria-label="Enter the Glacis website">
+  <span class="corner tl" aria-hidden="true">Glacis · Thermal scan</span>
+  <span class="mark"><img class="sym" id="sym" src="symbol.svg" alt=""><span class="hint" id="hint"><i aria-hidden="true"></i>Click me</span></span>
+  <span class="corner br" aria-hidden="true">−24°C ambient<br>Skin 31.8°C</span>
+</button>
+
+<header class="hero" id="top">
+  <div class="field" aria-hidden="true"></div>
+  <nav class="nav" aria-label="Main">
+    <div class="in">
+      <a href="#top" aria-label="Glacis home"><img src="lockup.svg" alt="Glacis"></a>
+      <ul><li><a href="#how">How it works</a></li><li><a href="#live">Live reading</a></li><li><a href="#specs">Specs</a></li><li><a href="#trials">Field trials</a></li></ul>
+    </div>
+  </nav>
+  <div class="in hero-body">
+    <div class="label"><span class="pulse" aria-hidden="true"></span>Thermal scan · live · skin surface</div>
+    <h1>Stay out longer.</h1>
+    <p class="lead">Glacis reads the skin temperature of your fingertips every few seconds and tells you, calmly and early, when the cold is winning. Built for people who work and perform at minus forty.</p>
+    <div class="ctas"><a class="btn primary" href="#trials">Join the field trials</a><a class="btn ghost" href="#live">See a live reading</a></div>
+    <div class="readouts" aria-label="Sample sensor readout">
+      <div><span class="label">Skin temp · left hand</span><b>31.8°C</b></div>
+      <div><span class="label">Ambient</span><b>−24°C</b></div>
+      <div><span class="label">Wind</span><b>41 km/h</b></div>
+      <div><span class="label">Altitude</span><b>3,210 m</b></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- 1 · numb -->
+  <section class="numb" id="problem" aria-labelledby="h-numb">
+    <div class="stick" id="stick">
+      <div class="bg" aria-hidden="true"></div>
+      <div class="in">
+        <div class="marker label">09:40<span class="sep">·</span>−18°C<span class="sep">·</span>The problem</div>
+        <div class="read" aria-hidden="true">
+          <span class="label">Skin temp · little finger</span>
+          <div class="temp" id="numbT">31.8<small>°C</small></div>
+          <span class="risk" id="risk">Frostbite risk</span>
+        </div>
+        <div class="lines" id="h-numb" role="heading" aria-level="2">
+          <p class="on">Your fingers cool.</p>
+          <p>Feeling goes first.</p>
+          <p>The warning never arrives.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <div class="facts">
+    <div class="in">
+      <div class="f"><b>806</b><span>US service members had a cold-weather injury in one year, mostly frostbite. <a href="https://health.mil/News/Articles/2025/12/01/MSMR-Cold-Weather-Injuries?page=15">MSMR, 2025</a></span></div>
+      <div class="f"><b>+42%</b><span>Rise in that injury rate over the year before. <a href="https://health.mil/News/Articles/2025/12/01/MSMR-Cold-Weather-Injuries?page=15">MSMR, 2025</a></span></div>
+      <div class="f"><b>19</b><span>Frostbite amputations in Winnipeg in one winter, a ten-year high. <a href="https://www.theweathernetwork.com/en/news/lifestyle/health/frostbite-amputations-hit-10-year-high-in-winnipeg-last-winter-data-suggests">Weather Network</a></span></div>
+    </div>
+  </div>
+  <div class="thaw" aria-hidden="true"></div>
+
+  <!-- 2 · how -->
+  <section class="how" id="how" aria-labelledby="h-how">
+    <div class="in">
+      <div class="head">
+        <div class="marker label">11:15<span class="sep">·</span>−21°C<span class="sep">·</span>How it works</div>
+        <h2 id="h-how">Know before it bites.</h2>
+        <p class="lead">Glacis feels the cold for you. It senses every fingertip, reads the trend, and speaks up while there is still time.</p>
+      </div>
+      <div class="windows">
+        <article class="win">
+          <div class="scope" id="w1"><div class="cap"><span>Sense</span><b>5 tips · every 5 s</b></div><canvas aria-hidden="true"></canvas></div>
+          <span class="label">01 · Sense</span>
+          <h3>Thin sensors at each fingertip</h3>
+          <p>They sit in the glove liner. The wrist band holds the battery and does the thinking.</p>
+        </article>
+        <article class="win">
+          <div class="scope" id="w2"><div class="cap"><span>Read · ring finger</span><b id="w2rate">−0.6°C/min</b></div><canvas aria-hidden="true"></canvas><div class="big-read" id="w2v">24.6°</div></div>
+          <span class="label">02 · Read</span>
+          <h3>The trend, not one number</h3>
+          <p>Glacis weighs how fast each finger is cooling against wind and ambient temperature.</p>
+        </article>
+        <article class="win">
+          <div class="scope" id="w3"><div class="cap"><span>Warn · on the band</span><b>Vibration · light</b></div>
+            <div class="band" aria-hidden="true"><span class="ring"></span><span class="ring"></span><span class="ring"></span><div class="face"><span class="led"></span><span class="word" id="w3w">Normal</span></div></div>
+            <p class="sentence" id="w3s">All fingers are warm.</p></div>
+          <span class="label">03 · Warn</span>
+          <h3>A calm, early nudge</h3>
+          <p>A vibration you can feel through a mitt, one word on the band, and a plain sentence in the app.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · live -->
+  <section class="live" id="live" aria-labelledby="h-live">
+    <div class="in">
+      <div class="head">
+        <div class="marker label">14:30<span class="sep">·</span>−24°C<span class="sep">·</span>Live reading</div>
+        <h2 id="h-live">Watch a hand cool.</h2>
+        <p class="lead">This is how Glacis sees your left hand. Set the conditions and press play: one hour on the mountain in fifteen seconds.</p>
+      </div>
+      <div class="rig">
+        <div class="cam" id="cam">
+          <canvas aria-hidden="true"></canvas>
+          <div class="cap"><span>Glacis · left hand</span><span id="camClock">00:00</span></div>
+          <div class="scale" aria-hidden="true"><i style="top:-4px">34°</i><i style="bottom:-4px">−30°</i></div>
+        </div>
+        <div class="side">
+          <div class="status">
+            <div><div class="label">Coldest fingertip</div><div class="bigt" id="coldest">31.8°C<small></small></div></div>
+            <span class="pill normal" id="pill">Normal</span>
+          </div>
+          <p class="msg" id="msg" aria-live="polite">All fingers are warm. Enjoy the climb.</p>
+          <svg class="spark" id="spark" viewBox="0 0 400 64" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <div class="ctrl"><div class="row"><label class="label" for="amb">Ambient</label><output id="ambO">−24°C</output></div><input type="range" id="amb" min="-40" max="-5" value="-24"></div>
+          <div class="ctrl"><div class="row"><label class="label" for="wind">Wind</label><output id="windO">41 km/h</output></div><input type="range" id="wind" min="0" max="70" value="41"></div>
+          <div class="ctrl"><span class="label">Hands</span>
+            <div class="seg" role="group" aria-label="Glove"><button type="button" data-g="1" aria-pressed="false">Liner</button><button type="button" data-g="2.2" aria-pressed="true">Glove</button><button type="button" data-g="3.6" aria-pressed="false">Mitt</button></div></div>
+          <div class="play"><button class="btn primary" id="go" type="button">Play 60 minutes</button><button class="btn ghost" id="reset" type="button">Reset</button></div>
+          <p class="note">Illustrative model for this page, not real sensor data. Glacis is a prototype in development and is not a medical device.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · specs -->
+  <section class="specs" id="specs" aria-labelledby="h-specs">
+    <canvas class="frost" id="frost" aria-hidden="true"></canvas>
+    <div class="in">
+      <div>
+        <div class="minus" aria-hidden="true">−40°</div>
+        <div class="marker label">16:50<span class="sep">·</span>−31°C<span class="sep">·</span>Specs</div>
+        <h2 id="h-specs">Built for minus forty.</h2>
+        <p class="lead" style="margin-top:20px">The cold kills batteries before it kills fingers. Glacis keeps its own cell warm, so it is still with you at the end of the day.</p>
+      </div>
+      <div>
+        <dl>
+          <div class="r"><dt>Operating range</dt><dd>−40°C to +10°C</dd></div>
+          <div class="r"><dt>Sensors</dt><dd>5 fingertips + wrist, per hand</dd></div>
+          <div class="r"><dt>Reading rate</dt><dd>Every 5 s</dd></div>
+          <div class="r"><dt>Alerts</dt><dd>Vibration · light · one word</dd></div>
+          <div class="r"><dt>Power</dt><dd>Self-warming cell, 3 days at −30°C</dd></div>
+          <div class="r"><dt>Band weight</dt><dd>Under 40 g</dd></div>
+          <div class="r"><dt>Works through</dt><dd>Liners, gloves, mitts</dd></div>
+        </dl>
+        <p class="small">Prototype design targets, not tested specifications.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · field trials -->
+  <section class="trials" id="trials" aria-labelledby="h-trials">
+    <div class="field" aria-hidden="true"></div>
+    <div class="in">
+      <div class="box">
+        <div class="marker label">18:20<span class="sep">·</span>Back at camp<span class="sep">·</span>Field trials 2026–27</div>
+        <h2 id="h-trials">Help us test it in the cold.</h2>
+        <p>We are testing early prototypes with ice climbers and winter athletes around Ontario this season. If you spend long days outside in serious cold, we would love to hear what goes wrong for your hands.</p>
+        <div class="mail"><code id="addr">[your email]</code><button class="btn primary" id="copy" type="button">Copy email</button></div>
+        <p class="who">Starting with athletes and mountaineers. Next: military, Arctic search and rescue, and northern communities, built together with them.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="in">
+    <img src="lockup-reverse.svg" alt="Glacis">
+    <div style="display:grid;gap:8px;justify-items:start">
+      <button class="replay" id="replay" type="button">Replay intro</button>
+      <span class="label">Toronto · 43.6532°N, 79.3832°W</span>
+      <p>Glacis is a prototype in development. It is not a medical device and does not diagnose or prevent any condition.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+/* ---------- thermal palette: dust → teal → turquoise → chalk ---------- */
+const STOPS=[[0,[11,17,22]],[.22,[38,45,53]],[.42,[29,92,120]],[.64,[92,194,218]],[.84,[201,230,238]],[1,[248,252,253]]];
+const LUT=new Uint8ClampedArray(256*3);
+for(let i=0;i<256;i++){const v=i/255;let k=0;while(k<STOPS.length-2&&v>STOPS[k+1][0])k++;const[a,ca]=STOPS[k],[b,cb]=STOPS[k+1],f=(v-a)/(b-a);for(let j=0;j<3;j++)LUT[i*3+j]=ca[j]+(cb[j]-ca[j])*f}
+const heat=T=>Math.pow(clamp((T+30)/66,0,1),1.25);
+const gray=v=>{const c=Math.round(clamp(v,0,1)*255);return`rgb(${c},${c},${c})`};
+/* a left hand in a 180 × 220 frame */
+const OY=16;
+const HAND={fingers:[{n:"Thumb",b:[58,150],t:[22,104],w:23},{n:"Index",b:[72,112],t:[63,32],w:20},{n:"Middle",b:[93,106],t:[94,20],w:21},{n:"Ring",b:[113,110],t:[122,30],w:20},{n:"Little",b:[131,124],t:[148,64],w:17}]};
+class Thermal{
+  constructor(cv,W=180,H=220){this.W=W;this.H=H;cv.width=W;cv.height=H;this.ctx=cv.getContext("2d");
+    this.s=document.createElement("canvas");this.s.width=W/3;this.s.height=H/3;this.sx=this.s.getContext("2d");
+    this.m=document.createElement("canvas");this.m.width=W;this.m.height=H;this.mx=this.m.getContext("2d",{willReadFrequently:true})}
+  render(temps,palm,amb,t){
+    const sx=this.sx;sx.setTransform(1/3,0,0,1/3,0,OY/3);
+    sx.fillStyle=gray(heat(amb));sx.fillRect(0,-OY,this.W,this.H+OY);
+    sx.fillStyle=gray(heat(palm-1.2));sx.beginPath();sx.roundRect(66,170,56,60,18);sx.fill();
+    sx.fillStyle=gray(heat(palm));sx.beginPath();sx.ellipse(94,150,42,48,0,0,7);sx.fill();
+    sx.lineCap="round";
+    HAND.fingers.forEach((f,i)=>{const g=sx.createLinearGradient(f.b[0],f.b[1],f.t[0],f.t[1]);g.addColorStop(0,gray(heat(palm-.6)));g.addColorStop(.35,gray(heat((palm+temps[i])/2+1)));g.addColorStop(1,gray(heat(temps[i])));
+      sx.strokeStyle=g;sx.lineWidth=f.w;sx.beginPath();sx.moveTo(f.b[0],f.b[1]);sx.lineTo(f.t[0],f.t[1]);sx.stroke()});
+    this.mx.imageSmoothingEnabled=true;this.mx.drawImage(this.s,0,0,this.W,this.H);
+    const d=this.mx.getImageData(0,0,this.W,this.H),p=d.data,W=this.W;
+    for(let i=0,n=p.length;i<n;i+=4){const x=(i>>2)%W,y=(i>>2)/W|0;
+      const v=p[i]/255+.032*Math.sin(x*.085+t*.7+Math.sin(y*.055-t*.45)*2.4)+.018*Math.sin(y*.13+t*1.1)+(Math.random()-.5)*.03;
+      const k=clamp(v*255|0,0,255)*3;p[i]=LUT[k];p[i+1]=LUT[k+1];p[i+2]=LUT[k+2]}
+    this.ctx.putImageData(d,0,0)}
+}
+/* run a draw loop only while an element is on screen */
+function whenVisible(el,fn){let on=false,raf=0,last=0;const loop=ts=>{if(!on)return;if(ts-last>33){last=ts;fn(ts/1000)}raf=requestAnimationFrame(loop)};
+  new IntersectionObserver(es=>{on=es[0].isIntersecting;if(on&&!reduce)raf=requestAnimationFrame(loop);else cancelAnimationFrame(raf)},{rootMargin:"100px"}).observe(el);fn(0)}
+
+/* ---------- 1 · numb ---------- */
+(()=>{const sec=document.getElementById("problem"),st=document.getElementById("stick"),T=document.getElementById("numbT"),risk=document.getElementById("risk"),L=[...document.querySelectorAll(".lines p")];
+  const ink=[38,45,53],chalk=[228,242,246];
+  function set(p){st.style.setProperty("--p",p.toFixed(3));
+    const t=31.8-p*(31.8-8.6);T.firstChild.nodeValue=t.toFixed(1);
+    const dark=p>.26;st.style.setProperty("--tone",`rgb(${dark?chalk:ink})`);st.classList.toggle("dark",dark);
+    const idx=p<.3?0:p<.62?1:2;L.forEach((e,i)=>e.classList.toggle("on",i===idx));risk.classList.toggle("on",p>.78)}
+  if(reduce){set(.7);return}
+  let q=false;const upd=()=>{q=false;const r=sec.getBoundingClientRect();set(clamp(-r.top/(r.height-innerHeight),0,1))};
+  addEventListener("scroll",()=>{if(!q){q=true;requestAnimationFrame(upd)}},{passive:true});addEventListener("resize",upd);upd()})();
+
+/* ---------- 2 · how: three windows ---------- */
+(()=>{const w1=document.getElementById("w1"),th=new Thermal(w1.querySelector("canvas"));
+  HAND.fingers.forEach(f=>{const d=document.createElement("span");d.className="dot";d.style.left=f.t[0]/180*100+"%";d.style.top=(f.t[1]+OY)/220*100+"%";w1.appendChild(d)});
+  whenVisible(w1,t=>th.render([30.5,29.2,28.8,24.6,26.1].map((v,i)=>v+Math.sin(t*.6+i)*.6),33,-21,t))})();
+(()=>{const w=document.getElementById("w2"),cv=w.querySelector("canvas"),ctx=cv.getContext("2d"),out=document.getElementById("w2v");cv.width=400;cv.height=500;
+  const N=140,data=[];let v=27;for(let i=0;i<N;i++){v-=.045;data.push(v)}
+  const Y=T=>470-(T-8)/(30-8)*400;
+  whenVisible(w,t=>{v-=.05+(Math.random()-.5)*.06;if(v<11.5)v=27.5;data.push(v);data.shift();
+    ctx.fillStyle="#0B1116";ctx.fillRect(0,0,400,500);
+    ctx.strokeStyle="rgba(157,176,188,.12)";ctx.lineWidth=1;for(let g=10;g<=30;g+=5){ctx.beginPath();ctx.moveTo(0,Y(g));ctx.lineTo(400,Y(g));ctx.stroke()}
+    ctx.setLineDash([4,6]);ctx.strokeStyle="rgba(242,184,75,.7)";ctx.beginPath();ctx.moveTo(0,Y(15));ctx.lineTo(400,Y(15));ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle="rgba(242,184,75,.8)";ctx.font="500 18px IBM Plex Mono, monospace";ctx.fillText("WATCH 15°",280,Y(15)-10);
+    const X=i=>i/(N-1)*400;const grad=ctx.createLinearGradient(0,Y(30),0,500);grad.addColorStop(0,"rgba(92,194,218,.45)");grad.addColorStop(1,"rgba(29,92,120,0)");
+    ctx.beginPath();ctx.moveTo(0,500);data.forEach((d,i)=>ctx.lineTo(X(i),Y(d)));ctx.lineTo(400,500);ctx.fillStyle=grad;ctx.fill();
+    ctx.beginPath();data.forEach((d,i)=>i?ctx.lineTo(X(i),Y(d)):ctx.moveTo(0,Y(d)));ctx.strokeStyle=v<15?"#F2B84B":"#8FD3E4";ctx.lineWidth=3;ctx.stroke();
+    ctx.beginPath();ctx.arc(398,Y(v),7,0,7);ctx.fillStyle="#F4FAFC";ctx.fill();
+    out.textContent=v.toFixed(1)+"°";out.style.color=v<15?"#F2B84B":"#F4FAFC"})})();
+(()=>{const w=document.getElementById("w3"),word=document.getElementById("w3w"),s=document.getElementById("w3s");let watch=false;
+  const flip=()=>{watch=!watch;w.classList.toggle("buzz",watch);word.textContent=watch?"Watch":"Normal";
+    s.textContent=watch?"Your ring finger dropped 2.1°C in ten minutes. Warm it before you continue.":"All fingers are warm."};
+  if(!reduce)setInterval(flip,3200)})();
+
+/* ---------- 3 · live: thermal-camera hand ---------- */
+const cam=document.getElementById("cam"),camT=new Thermal(cam.querySelector("canvas"));
+const tags=HAND.fingers.map(f=>{const e=document.createElement("div");e.className="tag";e.style.left=f.t[0]/180*100+"%";e.style.top=(f.t[1]+OY-4)/220*100+"%";e.innerHTML="<b>31.8</b><i></i>";cam.appendChild(e);return e});
+const K=[.8,1,1.05,1.1,1.2];
+let glove=2.2,minute=0,temps=K.map(()=>31.8),hist=[],timer=null;
+const amb=document.getElementById("amb"),wind=document.getElementById("wind");
+function eq(k){const a=+amb.value,w=+wind.value;const drive=(34-a)*(1+w/45)*k/glove;return Math.max(a+4,34-drive*.55)}
+function step(){minute++;K.forEach((k,i)=>{temps[i]+=(eq(k)-temps[i])*(.045*(1+wind.value/80)/Math.sqrt(glove))});hist.push(Math.min(...temps));draw();if(minute>=60)stop()}
+const state=T=>T<10?"alert":T<15?"watch":"normal";
+function draw(){
+  const cold=Math.min(...temps),ci=temps.indexOf(cold),s=state(cold),nm=HAND.fingers[ci].n.toLowerCase();
+  tags.forEach((e,i)=>{e.firstChild.textContent=temps[i].toFixed(1);e.className="tag "+state(temps[i])});
+  document.getElementById("coldest").innerHTML=`${cold.toFixed(1)}°C<small>${nm}</small>`;
+  const pill=document.getElementById("pill");pill.className="pill "+s;pill.textContent=s==="normal"?"Normal":s==="watch"?"Watch":"Alert";
+  const drop=hist.length>10?hist[hist.length-11]-cold:0;
+  document.getElementById("msg").textContent=s==="alert"?`Your ${nm} finger is at ${cold.toFixed(1)}°C. Stop and warm your hand now.`:s==="watch"?`Your ${nm} finger dropped ${Math.max(0,drop).toFixed(1)}°C in ten minutes. Warm it before you continue.`:"All fingers are warm. Enjoy the climb.";
+  document.getElementById("camClock").textContent="00:"+String(minute).padStart(2,"0").replace("60","60");
+  const sp=document.getElementById("spark"),X=m=>m/60*400,Y=T=>64-(T/34)*60-2,pts=hist.map((T,i)=>`${X(i+1).toFixed(1)},${Y(T).toFixed(1)}`).join(" ");
+  sp.innerHTML=`<line x1="0" x2="400" y1="${Y(15)}" y2="${Y(15)}" stroke="#F2B84B" stroke-opacity=".6" stroke-dasharray="3 5" vector-effect="non-scaling-stroke"/><line x1="0" x2="400" y1="${Y(10)}" y2="${Y(10)}" stroke="#FF8A5B" stroke-opacity=".6" stroke-dasharray="3 5" vector-effect="non-scaling-stroke"/><polyline points="0,${Y(31.8)} ${pts}" fill="none" stroke="#5CC2DA" stroke-width="2" vector-effect="non-scaling-stroke"/>`}
+const palm=()=>33.2-(31.8-temps.reduce((a,b)=>a+b)/5)*.25;
+whenVisible(cam,t=>camT.render(temps,palm(),+amb.value,t));
+function stop(){clearInterval(timer);timer=null;document.getElementById("go").textContent=minute>=60?"Play again":"Play 60 minutes"}
+function reset(){stop();minute=0;temps=K.map(()=>31.8);hist=[];draw();camT.render(temps,palm(),+amb.value,0)}
+document.getElementById("go").onclick=()=>{if(timer){stop();return}if(minute>=60)reset();
+  if(reduce){while(minute<60)step();camT.render(temps,palm(),+amb.value,0);return}
+  document.getElementById("go").textContent="Pause";timer=setInterval(step,240)};
+document.getElementById("reset").onclick=reset;
+amb.oninput=()=>{document.getElementById("ambO").textContent=amb.value.replace("-","−")+"°C"};
+wind.oninput=()=>{document.getElementById("windO").textContent=wind.value+" km/h"};
+document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{glove=+b.dataset.g;document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed",x===b))});
+draw();
+
+/* ---------- 4 · frost grows over −40 ---------- */
+(()=>{const cv=document.getElementById("frost"),sec=document.getElementById("specs"),ctx=cv.getContext("2d");let segs=[],maxA=1,k=.18,W=0,H=0,started=0;
+  function rnd(s){return()=>(s=(s*16807)%2147483647)/2147483647}
+  function build(){const r=sec.getBoundingClientRect();W=cv.width=Math.round(r.width);H=cv.height=Math.round(r.height);segs=[];const R=rnd(7);
+    const branch=(x,y,a,len,d,acc)=>{const x2=x+Math.cos(a)*len,y2=y+Math.sin(a)*len;segs.push([x,y,x2,y2,d,acc+len]);
+      if(d<6&&len>4){branch(x2,y2,a+(R()-.5)*.25,len*.78,d+1,acc+len);const mx=(x+x2)/2,my=(y+y2)/2;
+        if(R()<.8)branch(mx,my,a+Math.PI/3,len*.5,d+1,acc+len/2);if(R()<.8)branch(mx,my,a-Math.PI/3,len*.5,d+1,acc+len/2)}};
+    const n=Math.round((W+H)/55);
+    for(let i=0;i<n;i++){const e=i%4,u=R();let x,y,a;
+      if(e===0){x=u*W;y=0;a=Math.PI/2}else if(e===1){x=u*W;y=H;a=-Math.PI/2}else if(e===2){x=0;y=u*H;a=0}else{x=W;y=u*H;a=Math.PI}
+      branch(x,y,a+(R()-.5)*.9,28+R()*46,0,0)}
+    maxA=Math.max(...segs.map(s=>s[5]));segs.sort((a,b)=>a[5]-b[5]);paint()}
+  function paint(){ctx.clearRect(0,0,W,H);ctx.lineCap="round";const lim=k*maxA;
+    for(const s of segs){if(s[5]>lim)break;ctx.strokeStyle=`rgba(201,230,238,${(.5-s[4]*.06).toFixed(2)})`;ctx.lineWidth=Math.max(.6,1.8-s[4]*.22);ctx.beginPath();ctx.moveTo(s[0],s[1]);ctx.lineTo(s[2],s[3]);ctx.stroke()}}
+  build();addEventListener("resize",()=>{clearTimeout(build.t);build.t=setTimeout(build,200)});
+  if(reduce){k=1;paint();return}
+  new IntersectionObserver(es=>{if(es[0].isIntersecting&&!started){started=performance.now();const go=ts=>{k=clamp(.18+(ts-started)/7000*.82,0,1);paint();if(k<1)requestAnimationFrame(go)};requestAnimationFrame(go)}},{threshold:.25}).observe(sec)})();
+
+/* ---------- intro: the logo becomes the thermal map ---------- */
+(function(){
+  const intro=document.getElementById("intro"), sym=document.getElementById("sym");
+  document.body.classList.add("locked");
+  const rm=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;            // ease in-out
+  const easeIn=t=>t*t*t;
+  const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+  let done=false;
+  function finish(){intro.hidden=true;document.querySelectorAll(".grow,.intro-ghost").forEach(n=>n.remove());document.body.classList.remove("locked");document.body.classList.add("entered")}
+  function replay(){
+    document.querySelectorAll(".grow,.intro-ghost").forEach(n=>n.remove());
+    intro.getAnimations().forEach(a=>a.cancel());
+    intro.hidden=false;intro.classList.remove("go");intro.style.opacity="";intro.style.backgroundColor="";
+    sym.style.visibility="";sym.style.animation="";
+    document.body.classList.remove("entered");document.body.classList.add("locked");
+    window.scrollTo({top:0,left:0,behavior:"instant"});done=false;
+  }
+  document.getElementById("replay").addEventListener("click",replay);
+  function enter(){
+    if(done)return;done=true;intro.classList.add("go");
+    if(rm){intro.animate([{opacity:1},{opacity:0}],{duration:400,fill:"forwards"}).onfinish=finish;return}
+    const r=sym.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2, W0=r.width;
+    const vw=innerWidth, vh=innerHeight;
+    // the thermal map, seen through the logo's own shape
+    const grow=document.createElement("div");grow.className="grow";grow.style.opacity=0;document.body.appendChild(grow);
+    // the logo's rings, kept on top so they melt into the map's contours
+    const ghost=sym.cloneNode();ghost.removeAttribute("id");ghost.className="intro-ghost";ghost.alt="";
+    Object.assign(ghost.style,{width:W0+"px",height:W0+"px",left:(cx-W0/2)+"px",top:(cy-W0/2)+"px",animation:"none"});
+    document.body.appendChild(ghost);sym.style.visibility="hidden";
+    const portrait=matchMedia("(max-width:700px)").matches, ratio=portrait?16/9:9/16;   // image height / width
+    const Bend=Math.hypot(vw,vh)*1.5;                                   // logo big enough to swallow the screen
+    const hero=document.querySelector(".hero"), hb=hero.getBoundingClientRect();
+    const fw=vw*1.12, fh=hb.height*1.12;                                 // the hero's field box
+    const Mend=Math.max(fw, fh/ratio)*1.03;                              // the map at its final, real size
+    const T=2600, t0=performance.now();
+    const lerp=(a,b,t)=>a+(b-a)*t;
+    function place(B,M,mx,my){
+      const p=`${cx-B/2}px ${cy-B/2}px`, z=`${B}px ${B}px`;
+      grow.style.webkitMaskPosition=p;grow.style.maskPosition=p;grow.style.webkitMaskSize=z;grow.style.maskSize=z;
+      grow.style.backgroundSize=`${M}px ${M*ratio}px`;grow.style.backgroundPosition=`${mx-M/2}px ${my-M*ratio/2}px`;
+    }
+    function frame(now){
+      const t=clamp((now-t0)/T);
+      const inhale=t<.1?1-0.07*Math.sin(t/.1*Math.PI):1;
+      // phase A: the logo grows until it swallows the screen, the map grows with it
+      const a=ease(clamp((t-.08)/.57));
+      const B=inhale*W0*Math.exp(Math.log(Bend/W0)*a);
+      // phase B: the map zooms out to its real size and settles in the centre
+      const bph=ease(clamp((t-.6)/.4));
+      const Mgrow=Math.max(B/ratio,B)*1.15;
+      const M=bph>0?Math.exp(lerp(Math.log(Math.max(Bend/ratio,Bend)*1.15),Math.log(Mend),bph)):Mgrow;
+      const mx=lerp(cx,vw/2,Math.max(a*.3,bph)), my=lerp(cy,hb.top+hb.height/2,Math.max(a*.3,bph));
+      place(B,M,mx,my);
+      grow.style.opacity=clamp(t/.16);
+      ghost.style.transform=`scale(${B/W0}) rotate(${a*20}deg)`;
+      ghost.style.opacity=1-clamp((t-.06)/.45);
+      if(t<1)requestAnimationFrame(frame);
+      else{intro.style.opacity=0;grow.animate([{opacity:1},{opacity:0}],{duration:700,easing:"ease-out",fill:"forwards"}).onfinish=finish;document.body.classList.remove("locked");document.body.classList.add("entered")}
+    }
+    requestAnimationFrame(frame);
+  }
+  intro.addEventListener("click",enter);
+})();
+/* ---------- copy email ---------- */
+document.getElementById("copy").onclick=async e=>{const t=document.getElementById("addr").textContent;
+  try{await navigator.clipboard.writeText(t);e.target.textContent="Copied"}catch(err){const r=document.createRange();r.selectNodeContents(document.getElementById("addr"));const s=getSelection();s.removeAllRanges();s.addRange(r);e.target.textContent="Selected"}
+  setTimeout(()=>e.target.textContent="Copy email",1600)};
+</script>
+
+</body>
+</html>

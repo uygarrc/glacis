@@ -50,7 +50,37 @@
 .secrets{font:500 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:#6E7F8B}
 .secrets b{color:#8FD3E4;font-weight:500}
 @media (prefers-reduced-motion:reduce){.tilt,.hero .hero-body{transition:none;transform:none}}
+
+/* ============ bold branding — all of it switches off with one line (BRAND in the first script) ============ */
+.wordmark,.brandbar,.signoff{display:none}
+[data-brand="bold"]{scroll-padding-top:calc(64px + env(safe-area-inset-top,0px))}
+[data-brand="bold"] .wordmark{display:block;margin:0 0 4px -.05em;font:500 clamp(96px,19vw,300px)/.82 var(--f-display);letter-spacing:-.05em;color:#F4FAFC;
+  text-shadow:0 1px 0 rgba(255,255,255,.4),0 18px 60px rgba(29,92,120,.45),0 2px 6px rgba(29,92,120,.25);transform:translateZ(60px);user-select:none}
+[data-brand="bold"] .hero .hero-body{padding-block:110px 40px;gap:22px}
+[data-brand="bold"] .hero .hero-body > .label{display:none}
+[data-brand="bold"] .hero h1{font-size:clamp(30px,3.6vw,48px);letter-spacing:-.03em;line-height:1.05}
+[data-brand="bold"] .hero{min-height:max(760px,100svh)}
+/* the bar that stays with you */
+[data-brand="bold"] .brandbar{display:flex;position:fixed;left:0;right:0;top:0;z-index:40;align-items:center;justify-content:space-between;gap:16px;
+  padding:calc(10px + env(safe-area-inset-top,0px)) var(--gut-r) 10px var(--gut);background:rgba(11,17,22,.9);color:#E4F2F6;border-bottom:1px solid #22303A;
+  transform:translateY(-110%);transition:transform .45s cubic-bezier(.2,.7,.2,1)}
+@media (min-width:900px){[data-brand="bold"] .brandbar{padding-left:max(32px,env(safe-area-inset-left,0px));padding-right:max(32px,env(safe-area-inset-right,0px))}}
+[data-brand="bold"] body.scrolled .brandbar{transform:none}
+.brandbar a.home{display:flex;align-items:center;gap:10px;color:#F4FAFC;text-decoration:none;font:500 20px var(--f-display);letter-spacing:-.035em}
+.brandbar a.home img{width:24px;height:24px}
+.brandbar .bb-live{font:500 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:#9DB0BC;display:flex;align-items:center;gap:8px}
+.brandbar .bb-live i{width:6px;height:6px;border-radius:50%;background:#5CC2DA;animation:beat 2s ease-in-out infinite}
+.brandbar .btn{min-height:36px;padding:8px 14px;font-size:14px;background:#5CC2DA;color:#0B1116}
+.brandbar .btn:hover{background:#8FD3E4}
+@media (max-width:640px){.brandbar .bb-live{display:none}}
+/* the sign-off */
+[data-brand="bold"] .signoff{display:block;overflow:hidden;background:var(--dust)}
+.signoff span{display:block;font:500 clamp(110px,27vw,460px)/.78 var(--f-display);letter-spacing:-.06em;margin:0 0 -.06em -.05em;padding-inline:var(--gut);
+  background:url(thermal.jpg) 50% 35%/cover;-webkit-background-clip:text;background-clip:text;color:transparent;user-select:none}
+@media (prefers-reduced-motion:reduce){.brandbar .bb-live i{animation:none}.brandbar{transition:none}}
 </style>
+<script>/* Branding switch: "bold" shows the big Glacis wordmark, the bar that follows you and the footer sign-off. Change to "quiet" to go back. */
+const BRAND="bold";document.documentElement.dataset.brand=BRAND;</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&family=IBM+Plex+Mono:wght@300;400;500&display=swap">
 <style>
@@ -303,6 +333,7 @@ body.entered .nav{animation:rise .9s .2s cubic-bezier(.2,.7,.2,1) both}
   <span class="corner br" aria-hidden="true">−24°C ambient<br>Skin 31.8°C</span>
 </button>
 
+<div class="brandbar"><a class="home" href="#top" aria-label="Glacis home"><img src="symbol.svg" alt="">Glacis</a><span class="bb-live"><i aria-hidden="true"></i>Field trials · winter 2026–27</span><a class="btn" href="#trials">Join the field trials</a></div>
 <header class="hero" id="top">
   <div class="field" aria-hidden="true"></div>
   <canvas class="glfield" id="glf" aria-hidden="true"></canvas>
@@ -315,6 +346,7 @@ body.entered .nav{animation:rise .9s .2s cubic-bezier(.2,.7,.2,1) both}
     </div>
   </nav>
   <div class="in hero-body">
+    <div class="wordmark" aria-hidden="true">Glacis</div>
     <div class="label"><span class="pulse" aria-hidden="true"></span>Thermal scan · live · skin surface</div>
     <h1>Stay out longer.</h1>
     <p class="lead">Glacis reads the skin temperature of your fingertips every few seconds and tells you, calmly and early, when the cold is winning. Built for people who work and perform at minus forty.</p>
@@ -473,6 +505,7 @@ body.entered .nav{animation:rise .9s .2s cubic-bezier(.2,.7,.2,1) both}
       <p>Glacis is a prototype in development. It is not a medical device and does not diagnose or prevent any condition.</p>
     </div>
   </div>
+  <div class="signoff" aria-hidden="true"><span>Glacis</span></div>
 </footer>
 
 <script>
@@ -784,6 +817,8 @@ document.querySelectorAll(".scope,.cam").forEach(el=>{if(reduce)return;el.classL
 // for the curious
 console.log("%cGlacis%c\nStay out longer.\n\nYou found the console. Seven things are hidden on the page; this is not one of them.\nTry: rest your cursor on the field. Click it. Shiver. Type cold. Press N.","font:500 28px Inter Tight,sans-serif;color:#1D5C78","font:13px IBM Plex Mono,monospace;color:#4F5B66");
 
+/* ---------- the brand bar appears once you leave the hero ---------- */
+(()=>{const h=document.querySelector(".hero");let q=false;const u=()=>{q=false;document.body.classList.toggle("scrolled",scrollY>h.offsetHeight*.85)};addEventListener("scroll",()=>{if(!q){q=true;requestAnimationFrame(u)}},{passive:true});u()})();
 /* ---------- copy email ---------- */
 document.getElementById("copy").onclick=async e=>{const t=document.getElementById("addr").textContent;
   try{await navigator.clipboard.writeText(t);e.target.textContent="Copied"}catch(err){const r=document.createRange();r.selectNodeContents(document.getElementById("addr"));const s=getSelection();s.removeAllRanges();s.addRange(r);e.target.textContent="Selected"}

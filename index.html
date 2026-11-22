@@ -14,7 +14,7 @@
 /* ============ the living field: WebGL relief, cursor ripples, warmth ============ */
 .glfield{position:absolute;inset:0;width:100%;height:100%;z-index:-2;opacity:0;transition:opacity 1.6s ease;display:block}
 .glfield.on{opacity:1}
-.hero.gl .field{animation:none}
+.hero.gl .field{animation-play-state:paused}
 .hero{cursor:crosshair}
 .hero .hero-body{transform:perspective(1400px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .6s cubic-bezier(.2,.7,.2,1);transform-style:preserve-3d}
 .hero .hero-body > *{transform:translateZ(var(--z,0))}
@@ -719,7 +719,7 @@ void main(){
   let budget=460000,W=0,Hh=0;
   function size(){const r=hero.getBoundingClientRect(),q=Math.min(.75,Math.sqrt(budget/Math.max(1,r.width*r.height)));W=cv.width=Math.max(2,Math.round(r.width*q));Hh=cv.height=Math.max(2,Math.round(r.height*q));gl.viewport(0,0,W,Hh);
     gl.bindTexture(gl.TEXTURE_2D,tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,W,Hh,0,gl.RGBA,gl.UNSIGNED_BYTE,null);gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);gl.bindFramebuffer(gl.FRAMEBUFFER,null)}
-  size();addEventListener("resize",size);
+  size();addEventListener("resize",()=>{size();if(cv.classList.contains("on"))frame()});
   // pointer state, in shader units (y up, divided by height)
   let mx=.5,my=.5,tmx=.6,tmy=.55,D=0,lastMove=0,moved=false,lastEmit=0,night=0,nightT=0,inside=false;
   const read=document.getElementById("cread"),readT=document.getElementById("creadT"),skin=document.getElementById("heroSkin");
@@ -746,9 +746,9 @@ void main(){
     const gv={t,mx,my,D,n:nightT};
     gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);draw(PA,gv);gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);draw(PB,gv)}
   // adapt resolution if the device struggles
-  let on=false,raf=0,fr=0,ft=performance.now();
-  const loop=()=>{if(!on)return;if(document.body.classList.contains("locked")){raf=requestAnimationFrame(loop);return}if(!cv.classList.contains("on")){cv.classList.add("on");hero.classList.add("gl")}frame();
-    fr++;const n=performance.now();if(n-ft>2000){const fps=fr*1000/(n-ft);if(fps<45&&budget>120000){budget*=.7;size()}fr=0;ft=n}raf=requestAnimationFrame(loop)};
+  let on=false,raf=0,fr=0,ft=performance.now(),warm0=0,lowered=false;
+  const loop=()=>{if(!on)return;if(document.body.classList.contains("locked")){raf=requestAnimationFrame(loop);return}if(!cv.classList.contains("on")){cv.classList.add("on");hero.classList.add("gl");warm0=performance.now();fr=0;ft=warm0}frame();
+    fr++;const n=performance.now();if(n-ft>2000){const fps=fr*1000/(n-ft);if(n-warm0>3000&&fps<45&&budget>160000&&!lowered){lowered=true;budget*=.6;size();frame()}fr=0;ft=n}raf=requestAnimationFrame(loop)};
   new IntersectionObserver(es=>{on=es[0].isIntersecting;cancelAnimationFrame(raf);if(on)raf=requestAnimationFrame(loop)}).observe(hero);
   if(reduce){on=false;setTimeout(()=>{cv.classList.add("on");frame()},50)}
   // N: polar night

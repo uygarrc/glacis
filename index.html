@@ -14,11 +14,12 @@
 /* ============ the living field: WebGL relief, cursor ripples, warmth ============ */
 .glfield{position:absolute;inset:0;width:100%;height:100%;z-index:-2;opacity:0;transition:opacity 1.6s ease;display:block}
 .glfield.on{opacity:1}
+.hero.gl .field{animation:none}
 .hero{cursor:crosshair}
 .hero .hero-body{transform:perspective(1400px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .6s cubic-bezier(.2,.7,.2,1);transform-style:preserve-3d}
 .hero .hero-body > *{transform:translateZ(var(--z,0))}
 .hero h1{--z:40px}.hero .readouts{--z:20px}
-.cursor-read{position:absolute;z-index:4;pointer-events:none;font:500 11px var(--f-mono);letter-spacing:.08em;color:#262D35;transform:translate(16px,16px);opacity:0;transition:opacity .3s;white-space:nowrap;display:grid;gap:2px}
+.cursor-read{position:absolute;left:0;top:0;z-index:4;will-change:transform;pointer-events:none;font:500 11px var(--f-mono);letter-spacing:.08em;color:#262D35;opacity:0;transition:opacity .3s;white-space:nowrap;display:grid;gap:2px}
 .cursor-read b{font:400 18px var(--f-mono);letter-spacing:-.02em}
 .hero:hover .cursor-read{opacity:.9}
 .warm-hint{position:absolute;right:max(24px,env(safe-area-inset-right,0px));bottom:24px;z-index:4;font:500 11px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:#4F5B66;opacity:.8}
@@ -126,8 +127,8 @@ h3{font-weight:500;font-size:20px;line-height:1.3;letter-spacing:-.01em}
 .numb{position:relative;height:300vh;background:var(--night)}
 .numb .stick{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;isolation:isolate;--p:0}
 .numb .bg{position:absolute;inset:-4%;z-index:-2;background:url(thermal.jpg) center/cover no-repeat;
-  filter:saturate(calc(1 - var(--p)*.92)) brightness(calc(1 - var(--p)*.8)) contrast(calc(1 + var(--p)*.25));
-  transform:scale(calc(1.05 + var(--p)*.12));will-change:filter,transform}
+  transform:scale(calc(1.05 + var(--p)*.12));will-change:transform}
+.numb .bg.cold{filter:saturate(.08) brightness(.22) contrast(1.25);opacity:var(--p);will-change:transform,opacity}
 @media (max-width:700px){.numb .bg{background-image:url(thermal-portrait.jpg)}}
 .numb .stick::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(11,17,22,0) 30%,rgba(11,17,22,.85) 100%);opacity:calc(.35 + var(--p)*.65)}
 .numb .in{height:100%;display:grid;grid-template-rows:auto 1fr auto;padding-block:clamp(72px,10vh,120px) clamp(40px,7vh,72px)}
@@ -195,7 +196,7 @@ h3{font-weight:500;font-size:20px;line-height:1.3;letter-spacing:-.01em}
 .cam .scale{position:absolute;right:16px;top:24px;bottom:16px;width:8px;border-radius:2px;background:linear-gradient(0deg,#0E1419,#262D35 20%,#1D5C78 42%,#5CC2DA 66%,#C9E6EE 86%,#F4FAFC);z-index:2}
 .cam .scale i{position:absolute;right:14px;font:500 10px var(--f-mono);font-style:normal;color:var(--night-muted);white-space:nowrap}
 .tag{position:absolute;z-index:3;transform:translate(-50%,-100%);display:grid;justify-items:center;gap:4px;pointer-events:none}
-.tag b{font:500 13px var(--f-mono);font-variant-numeric:tabular-nums;color:#F4FAFC;background:rgba(11,17,22,.55);padding:2px 6px;border-radius:3px;backdrop-filter:blur(4px)}
+.tag b{font:500 13px var(--f-mono);font-variant-numeric:tabular-nums;color:#F4FAFC;background:rgba(11,17,22,.72);padding:2px 6px;border-radius:3px}
 .tag i{width:14px;height:14px;border:1.5px solid #F4FAFC;border-radius:50%;transform:translateY(50%)}
 .tag.watch b{color:var(--caution)}.tag.watch i{border-color:var(--caution)}
 .tag.alert b{background:var(--risk);color:#fff}.tag.alert i{border-color:var(--alert);animation:beat 1s infinite}
@@ -233,7 +234,7 @@ input[type=range]{width:100%;accent-color:#5CC2DA;height:28px}
   background:url(thermal.jpg) 30% 40%/cover;-webkit-background-clip:text;background-clip:text;color:transparent;filter:saturate(1.1)}
 .specs .marker{color:var(--night-accent);margin-bottom:20px}
 .specs .lead{color:var(--night-muted)}
-.specs dl{margin:0;display:grid;background:rgba(11,17,22,.6);backdrop-filter:blur(6px);border:1px solid var(--night-line);border-radius:6px;padding:4px 20px}
+.specs dl{margin:0;display:grid;background:rgba(11,17,22,.82);border:1px solid var(--night-line);border-radius:6px;padding:4px 20px}
 .specs .r{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:16px;padding:14px 0;border-bottom:1px solid var(--night-line)}
 .specs .r:last-child{border-bottom:0}
 .specs dt{font:500 11px/22px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--night-muted)}
@@ -331,7 +332,7 @@ body.entered .nav{animation:rise .9s .2s cubic-bezier(.2,.7,.2,1) both}
   <!-- 1 · numb -->
   <section class="numb" id="problem" aria-labelledby="h-numb">
     <div class="stick" id="stick">
-      <div class="bg" aria-hidden="true"></div>
+      <div class="bg" aria-hidden="true"></div><div class="bg cold" aria-hidden="true"></div>
       <div class="in">
         <div class="marker label">09:40<span class="sep">·</span>−18°C<span class="sep">·</span>The problem</div>
         <div class="read" aria-hidden="true">
@@ -506,7 +507,7 @@ class Thermal{
     this.ctx.putImageData(d,0,0)}
 }
 /* run a draw loop only while an element is on screen */
-function whenVisible(el,fn){let on=false,raf=0,last=0;const loop=ts=>{if(!on)return;if(ts-last>33){last=ts;fn(ts/1000)}raf=requestAnimationFrame(loop)};
+function whenVisible(el,fn){let on=false,raf=0,last=0;const loop=ts=>{if(!on)return;if(ts-last>41){last=ts;fn(ts/1000)}raf=requestAnimationFrame(loop)};
   new IntersectionObserver(es=>{on=es[0].isIntersecting;if(on&&!reduce)raf=requestAnimationFrame(loop);else cancelAnimationFrame(raf)},{rootMargin:"100px"}).observe(el);fn(0)}
 
 /* ---------- 1 · numb ---------- */
@@ -670,24 +671,31 @@ const egg=(()=>{const TOTAL=7;let found=new Set();try{found=new Set(JSON.parse(l
   const hero=document.querySelector(".hero"),cv=document.getElementById("glf");if(!cv)return;
   const gl=cv.getContext("webgl",{antialias:false,premultipliedAlpha:false,preserveDrawingBuffer:false});if(!gl)return;
   const VS="attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}";
-  const FS=`precision highp float;
+  const COMMON=`precision highp float;
 uniform vec2 R;uniform float T;uniform vec2 M;uniform float D;uniform float N;uniform vec4 W[12];
+float warmth(vec2 uv){float d=distance(uv,M);return D*exp(-d*d*(14.-6.*D));}
+`;
+  // pass 1: the height of the ice, one sample per pixel, packed into two bytes
+  const FSA=COMMON+`
 float h1(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float ns(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.-2.*f);return mix(mix(h1(i),h1(i+vec2(1,0)),u.x),mix(h1(i+vec2(0,1)),h1(i+1.),u.x),u.y);}
 float fbm(vec2 p){float v=0.,a=.5;mat2 m=mat2(1.6,1.2,-1.2,1.6);for(int i=0;i<5;i++){v+=a*ns(p);p=m*p;a*=.5;}return v;}
 float base(vec2 p){vec2 q=vec2(fbm(p+vec2(0.,T*.025)),fbm(p+vec2(5.2,1.3)-T*.02));return fbm(p+3.2*q+vec2(1.7,9.2)+T*.015);}
 float waves(vec2 uv){float h=0.;for(int i=0;i<12;i++){vec4 w=W[i];float age=T-w.z;if(age<0.||age>5.)continue;
   float d=distance(uv,w.xy);float fr=age*.32;float x=d-fr;h+=w.w*exp(-age*1.1)*exp(-x*x*160.)*cos(x*58.);}return h;}
-float warmth(vec2 uv){float d=distance(uv,M);return D*exp(-d*d*(14.-6.*D));}
-float H(vec2 uv){return base(uv*2.1)+waves(uv)*.075+warmth(uv)*.12;}
+void main(){vec2 uv=gl_FragCoord.xy/R.y;float h=base(uv*2.1)+waves(uv)*.075+warmth(uv)*.12;
+  float v=clamp(h/1.5,0.,.9999)*255.;gl_FragColor=vec4(floor(v)/255.,fract(v),0.,1.);}`;
+  // pass 2: light the surface from the cursor
+  const FSB=COMMON+`uniform sampler2D S;
+float hs(vec2 px){vec4 c=texture2D(S,px/R);return (c.r*255.+c.g)/255.*1.5;}
 vec3 pal(float t){
   vec3 c0=vec3(.149,.176,.208),c1=vec3(.114,.361,.471),c2=vec3(.361,.761,.855),c3=vec3(.788,.902,.933),c4=vec3(.957,.98,.988);
   t=clamp(t,0.,1.);
   if(t<.25)return mix(c0,c1,t/.25);if(t<.5)return mix(c1,c2,(t-.25)/.25);if(t<.75)return mix(c2,c3,(t-.5)/.25);return mix(c3,c4,(t-.75)/.25);}
 void main(){
-  vec2 uv=gl_FragCoord.xy/R.y;float e=1.6/R.y;
-  float h=H(uv),hx=H(uv+vec2(e,0.)),hy=H(uv+vec2(0.,e));
-  vec3 n=normalize(vec3((h-hx)/e*.22,(h-hy)/e*.22,1.));
+  vec2 px=gl_FragCoord.xy,uv=px/R.y;float e=1./R.y;
+  float h=hs(px),hx=hs(px+vec2(1.,0.)),hy=hs(px+vec2(0.,1.)),hx2=hs(px-vec2(1.,0.)),hy2=hs(px-vec2(0.,1.));
+  vec3 n=normalize(vec3((hx2-hx)/(2.*e)*.22,(hy2-hy)/(2.*e)*.22,1.));
   vec3 L=normalize(vec3(M-uv,.55));
   float dif=max(dot(n,L),0.);float spec=pow(max(dot(reflect(-L,n),vec3(0.,0.,1.)),0.),28.);
   float heat=smoothstep(.26,.8,h)+warmth(uv)*.22;
@@ -697,13 +705,20 @@ void main(){
   float iso=abs(fract(h*14.)-.5);c=mix(c,c*.86,smoothstep(.06,.0,iso)*.5);
   gl_FragColor=vec4(c,1.);}`;
   const sh=(t,s)=>{const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))console.warn(gl.getShaderInfoLog(o));return o};
-  const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(pr);gl.useProgram(pr);
+  const mk=fs=>{const p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_SHADER,VS));gl.attachShader(p,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(p);
+    const u={};["R","T","M","D","N","W","S"].forEach(k=>u[k]=gl.getUniformLocation(p,k));return{p,u,a:gl.getAttribLocation(p,"p")}};
+  const PA=mk(FSA),PB=mk(FSB);
   const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
-  const loc=gl.getAttribLocation(pr,"p");gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
-  const U=k=>gl.getUniformLocation(pr,k),uR=U("R"),uT=U("T"),uM=U("M"),uD=U("D"),uN=U("N"),uW=U("W");
+  const tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tex);
+  [[gl.TEXTURE_MIN_FILTER,gl.NEAREST],[gl.TEXTURE_MAG_FILTER,gl.NEAREST],[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE]].forEach(([k,v])=>gl.texParameteri(gl.TEXTURE_2D,k,v));
+  const fbo=gl.createFramebuffer();
+  function draw(P,vals){gl.useProgram(P.p);gl.enableVertexAttribArray(P.a);gl.vertexAttribPointer(P.a,2,gl.FLOAT,false,0,0);
+    gl.uniform2f(P.u.R,W,Hh);gl.uniform1f(P.u.T,vals.t);gl.uniform2f(P.u.M,vals.mx,vals.my);gl.uniform1f(P.u.D,vals.D);gl.uniform1f(P.u.N,vals.n);gl.uniform4fv(P.u.W,waves);
+    if(P.u.S)gl.uniform1i(P.u.S,0);gl.drawArrays(gl.TRIANGLES,0,3)}
   const waves=new Float32Array(48);let wi=0;const t0=performance.now();const now=()=>(performance.now()-t0)/1000;
-  let scale=.5,W=0,Hh=0;
-  function size(){const r=hero.getBoundingClientRect(),q=Math.min(devicePixelRatio||1,2)*scale;W=cv.width=Math.max(2,Math.round(r.width*q));Hh=cv.height=Math.max(2,Math.round(r.height*q));gl.viewport(0,0,W,Hh)}
+  let budget=460000,W=0,Hh=0;
+  function size(){const r=hero.getBoundingClientRect(),q=Math.min(.75,Math.sqrt(budget/Math.max(1,r.width*r.height)));W=cv.width=Math.max(2,Math.round(r.width*q));Hh=cv.height=Math.max(2,Math.round(r.height*q));gl.viewport(0,0,W,Hh);
+    gl.bindTexture(gl.TEXTURE_2D,tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,W,Hh,0,gl.RGBA,gl.UNSIGNED_BYTE,null);gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);gl.bindFramebuffer(gl.FRAMEBUFFER,null)}
   size();addEventListener("resize",size);
   // pointer state, in shader units (y up, divided by height)
   let mx=.5,my=.5,tmx=.6,tmy=.55,D=0,lastMove=0,moved=false,lastEmit=0,night=0,nightT=0,inside=false;
@@ -714,7 +729,7 @@ void main(){
   let lastX=0,dir=0,flips=[];
   hero.addEventListener("pointermove",e=>{const[x,y,px,py,r]=toUnits(e);const dx=Math.hypot(x-tmx,y-tmy);tmx=x;tmy=y;inside=true;
     if(dx>.004){moved=true;lastMove=now();D*=.94;if(now()-lastEmit>.11){emit(x,y,.25);lastEmit=now()}}
-    if(read){read.style.left=px+"px";read.style.top=py+"px"}
+    if(read)read.style.transform=`translate(${px+16}px,${py+16}px)`;
     const nx=px/r.width-.5,ny=py/r.height-.5;hero.style.setProperty("--ry",(nx*4).toFixed(2)+"deg");hero.style.setProperty("--rx",(-ny*3).toFixed(2)+"deg");
     const d=Math.sign(e.clientX-lastX);if(d&&d!==dir){dir=d;const t=now();flips.push(t);flips=flips.filter(f=>t-f<.7);if(flips.length>8){flips=[];egg.hit("shiver","Shiver","Shivering detected. Glacis noticed before you did.")}}lastX=e.clientX});
   hero.addEventListener("pointerleave",()=>{inside=false;hero.style.setProperty("--rx","0deg");hero.style.setProperty("--ry","0deg")});
@@ -728,12 +743,12 @@ void main(){
     if(D>.97&&!warmHit){warmHit=true;egg.hit("warm","Warmth","You warmed the field by 2.4°C. Hands still are warm hands.")}
     nightT+=(night-nightT)*.05;
     const v=31.8+D*2.4;if(readT)readT.textContent=v.toFixed(1)+"°";if(skin)skin.textContent=v.toFixed(1)+"°C";
-    gl.uniform2f(uR,W,Hh);gl.uniform1f(uT,t);gl.uniform2f(uM,mx*(W/Hh)/(W/Hh),my);gl.uniform1f(uD,D);gl.uniform1f(uN,nightT);gl.uniform4fv(uW,waves);
-    gl.drawArrays(gl.TRIANGLES,0,3)}
+    const gv={t,mx,my,D,n:nightT};
+    gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);draw(PA,gv);gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);draw(PB,gv)}
   // adapt resolution if the device struggles
   let on=false,raf=0,fr=0,ft=performance.now();
-  const loop=()=>{if(!on)return;if(document.body.classList.contains("locked")){raf=requestAnimationFrame(loop);return}cv.classList.add("on");frame();
-    fr++;const n=performance.now();if(n-ft>2000){const fps=fr*1000/(n-ft);if(fps<40&&scale>.3){scale-=.1;size()}fr=0;ft=n}raf=requestAnimationFrame(loop)};
+  const loop=()=>{if(!on)return;if(document.body.classList.contains("locked")){raf=requestAnimationFrame(loop);return}if(!cv.classList.contains("on")){cv.classList.add("on");hero.classList.add("gl")}frame();
+    fr++;const n=performance.now();if(n-ft>2000){const fps=fr*1000/(n-ft);if(fps<45&&budget>120000){budget*=.7;size()}fr=0;ft=n}raf=requestAnimationFrame(loop)};
   new IntersectionObserver(es=>{on=es[0].isIntersecting;cancelAnimationFrame(raf);if(on)raf=requestAnimationFrame(loop)}).observe(hero);
   if(reduce){on=false;setTimeout(()=>{cv.classList.add("on");frame()},50)}
   // N: polar night

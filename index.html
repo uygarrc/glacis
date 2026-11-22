@@ -10,7 +10,46 @@
 <meta property="og:description" content="Stay out longer. A frostbite-early-warning wearable for people who work and perform at minus forty.">
 <meta property="og:image" content="/thermal.jpg">
 <link rel="icon" type="image/svg+xml" href="/symbol.svg">
-<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+/* ============ the living field: WebGL relief, cursor ripples, warmth ============ */
+.glfield{position:absolute;inset:0;width:100%;height:100%;z-index:-2;opacity:0;transition:opacity 1.6s ease;display:block}
+.glfield.on{opacity:1}
+.hero{cursor:crosshair}
+.hero .hero-body{transform:perspective(1400px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .6s cubic-bezier(.2,.7,.2,1);transform-style:preserve-3d}
+.hero .hero-body > *{transform:translateZ(var(--z,0))}
+.hero h1{--z:40px}.hero .readouts{--z:20px}
+.cursor-read{position:absolute;z-index:4;pointer-events:none;font:500 11px var(--f-mono);letter-spacing:.08em;color:#262D35;transform:translate(16px,16px);opacity:0;transition:opacity .3s;white-space:nowrap;display:grid;gap:2px}
+.cursor-read b{font:400 18px var(--f-mono);letter-spacing:-.02em}
+.hero:hover .cursor-read{opacity:.9}
+.warm-hint{position:absolute;right:max(24px,env(safe-area-inset-right,0px));bottom:24px;z-index:4;font:500 11px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:#4F5B66;opacity:.8}
+@media (max-width:700px){.warm-hint{display:none}}
+@media (hover:none){.cursor-read{display:none}}
+
+/* 3D instruments: windows and the thermal camera tilt toward you */
+.tilt{transform:perspective(900px) rotateX(var(--tx,0deg)) rotateY(var(--ty,0deg)) translateZ(0);transition:transform .5s cubic-bezier(.2,.7,.2,1),box-shadow .5s;will-change:transform}
+.tilt:hover{box-shadow:0 30px 60px -30px rgba(11,17,22,.55)}
+.tilt::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:4;background:radial-gradient(600px circle at var(--gx,50%) var(--gy,50%),rgba(228,242,246,.14),transparent 45%);opacity:0;transition:opacity .4s}
+.tilt:hover::after{opacity:1}
+
+/* −40 easter egg */
+.minus{cursor:help;position:relative;transition:letter-spacing .6s ease}
+.minus .f{display:none}
+.minus.flip .c{display:none}.minus.flip .f{display:inline}
+.minus-cap{font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--night-accent);min-height:16px;margin:-8px 0 18px;opacity:0;transition:opacity .4s}
+.minus-cap.on{opacity:1}
+
+/* toast + whole-page frost */
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:80;transform:translate(-50%,20px);max-width:min(560px,calc(100vw - 32px));
+  background:rgba(11,17,22,.88);backdrop-filter:blur(10px);color:#E4F2F6;border:1px solid #2B3843;border-radius:6px;padding:12px 16px;display:flex;gap:12px;align-items:baseline;
+  font:400 15px/22px var(--f-display);opacity:0;pointer-events:none;transition:opacity .35s,transform .35s cubic-bezier(.2,.7,.2,1)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast .label{color:#8FD3E4;flex:none}
+.frostall{position:fixed;inset:0;z-index:70;pointer-events:none;opacity:0;transition:opacity 1.2s}
+.frostall.on{opacity:1}
+.secrets{font:500 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:#6E7F8B}
+.secrets b{color:#8FD3E4;font-weight:500}
+@media (prefers-reduced-motion:reduce){.tilt,.hero .hero-body{transition:none;transform:none}}
+</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&family=IBM+Plex+Mono:wght@300;400;500&display=swap">
 <style>
@@ -265,6 +304,9 @@ body.entered .nav{animation:rise .9s .2s cubic-bezier(.2,.7,.2,1) both}
 
 <header class="hero" id="top">
   <div class="field" aria-hidden="true"></div>
+  <canvas class="glfield" id="glf" aria-hidden="true"></canvas>
+  <div class="cursor-read" id="cread" aria-hidden="true"><span>SKIN · HERE</span><b id="creadT">31.8°</b></div>
+  <div class="warm-hint" aria-hidden="true">Rest your cursor on the field</div>
   <nav class="nav" aria-label="Main">
     <div class="in">
       <a href="#top" aria-label="Glacis home"><img src="lockup.svg" alt="Glacis"></a>
@@ -277,7 +319,7 @@ body.entered .nav{animation:rise .9s .2s cubic-bezier(.2,.7,.2,1) both}
     <p class="lead">Glacis reads the skin temperature of your fingertips every few seconds and tells you, calmly and early, when the cold is winning. Built for people who work and perform at minus forty.</p>
     <div class="ctas"><a class="btn primary" href="#trials">Join the field trials</a><a class="btn ghost" href="#live">See a live reading</a></div>
     <div class="readouts" aria-label="Sample sensor readout">
-      <div><span class="label">Skin temp · left hand</span><b>31.8°C</b></div>
+      <div><span class="label">Skin temp · left hand</span><b id="heroSkin">31.8°C</b></div>
       <div><span class="label">Ambient</span><b>−24°C</b></div>
       <div><span class="label">Wind</span><b>41 km/h</b></div>
       <div><span class="label">Altitude</span><b>3,210 m</b></div>
@@ -384,7 +426,8 @@ body.entered .nav{animation:rise .9s .2s cubic-bezier(.2,.7,.2,1) both}
     <canvas class="frost" id="frost" aria-hidden="true"></canvas>
     <div class="in">
       <div>
-        <div class="minus" aria-hidden="true">−40°</div>
+        <div class="minus" id="minus" aria-hidden="true">−40°</div>
+        <div class="minus-cap" id="minusCap">−40°C = −40°F · the only number both scales share</div>
         <div class="marker label">16:50<span class="sep">·</span>−31°C<span class="sep">·</span>Specs</div>
         <h2 id="h-specs">Built for minus forty.</h2>
         <p class="lead" style="margin-top:20px">The cold kills batteries before it kills fingers. Glacis keeps its own cell warm, so it is still with you at the end of the day.</p>
@@ -425,6 +468,7 @@ body.entered .nav{animation:rise .9s .2s cubic-bezier(.2,.7,.2,1) both}
     <div style="display:grid;gap:8px;justify-items:start">
       <button class="replay" id="replay" type="button">Replay intro</button>
       <span class="label">Toronto · 43.6532°N, 79.3832°W</span>
+      <span class="secrets">7 things are hidden on this page · <b id="eggCount">0</b> found</span>
       <p>Glacis is a prototype in development. It is not a medical device and does not diagnose or prevent any condition.</p>
     </div>
   </div>
@@ -612,6 +656,119 @@ draw();
   }
   intro.addEventListener("click",enter);
 })();
+
+/* ================= the living field ================= */
+const egg=(()=>{const TOTAL=7;let found=new Set();try{found=new Set(JSON.parse(localStorage.getItem("glacis-eggs")||"[]"))}catch(e){}
+  const out=()=>{const b=document.getElementById("eggCount");if(b)b.textContent=found.size};
+  const toast=document.createElement("div");toast.className="toast";toast.setAttribute("role","status");document.body.appendChild(toast);let tt=0;
+  function say(label,text){toast.innerHTML=`<span class="label">${label}</span><span>${text}</span>`;toast.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>toast.classList.remove("on"),4800)}
+  function hit(id,label,text){const isNew=!found.has(id);found.add(id);try{localStorage.setItem("glacis-eggs",JSON.stringify([...found]))}catch(e){}out();
+    say(label,text+(isNew?` <span style="color:#9DB0BC">· ${found.size} of ${TOTAL} found</span>`:""))}
+  addEventListener("DOMContentLoaded",out);out();return{hit,say}})();
+
+(()=>{
+  const hero=document.querySelector(".hero"),cv=document.getElementById("glf");if(!cv)return;
+  const gl=cv.getContext("webgl",{antialias:false,premultipliedAlpha:false,preserveDrawingBuffer:false});if(!gl)return;
+  const VS="attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}";
+  const FS=`precision highp float;
+uniform vec2 R;uniform float T;uniform vec2 M;uniform float D;uniform float N;uniform vec4 W[12];
+float h1(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float ns(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.-2.*f);return mix(mix(h1(i),h1(i+vec2(1,0)),u.x),mix(h1(i+vec2(0,1)),h1(i+1.),u.x),u.y);}
+float fbm(vec2 p){float v=0.,a=.5;mat2 m=mat2(1.6,1.2,-1.2,1.6);for(int i=0;i<5;i++){v+=a*ns(p);p=m*p;a*=.5;}return v;}
+float base(vec2 p){vec2 q=vec2(fbm(p+vec2(0.,T*.025)),fbm(p+vec2(5.2,1.3)-T*.02));return fbm(p+3.2*q+vec2(1.7,9.2)+T*.015);}
+float waves(vec2 uv){float h=0.;for(int i=0;i<12;i++){vec4 w=W[i];float age=T-w.z;if(age<0.||age>5.)continue;
+  float d=distance(uv,w.xy);float fr=age*.32;float x=d-fr;h+=w.w*exp(-age*1.1)*exp(-x*x*160.)*cos(x*58.);}return h;}
+float warmth(vec2 uv){float d=distance(uv,M);return D*exp(-d*d*(14.-6.*D));}
+float H(vec2 uv){return base(uv*2.1)+waves(uv)*.075+warmth(uv)*.12;}
+vec3 pal(float t){
+  vec3 c0=vec3(.149,.176,.208),c1=vec3(.114,.361,.471),c2=vec3(.361,.761,.855),c3=vec3(.788,.902,.933),c4=vec3(.957,.98,.988);
+  t=clamp(t,0.,1.);
+  if(t<.25)return mix(c0,c1,t/.25);if(t<.5)return mix(c1,c2,(t-.25)/.25);if(t<.75)return mix(c2,c3,(t-.5)/.25);return mix(c3,c4,(t-.75)/.25);}
+void main(){
+  vec2 uv=gl_FragCoord.xy/R.y;float e=1.6/R.y;
+  float h=H(uv),hx=H(uv+vec2(e,0.)),hy=H(uv+vec2(0.,e));
+  vec3 n=normalize(vec3((h-hx)/e*.22,(h-hy)/e*.22,1.));
+  vec3 L=normalize(vec3(M-uv,.55));
+  float dif=max(dot(n,L),0.);float spec=pow(max(dot(reflect(-L,n),vec3(0.,0.,1.)),0.),28.);
+  float heat=smoothstep(.26,.8,h)+warmth(uv)*.22;
+  heat=mix(heat,heat*.52,N);
+  vec3 col=pal(heat);
+  vec3 c=col*(.8+.3*dif)+spec*vec3(.95,.99,1.)*(.35-.2*N);
+  float iso=abs(fract(h*14.)-.5);c=mix(c,c*.86,smoothstep(.06,.0,iso)*.5);
+  gl_FragColor=vec4(c,1.);}`;
+  const sh=(t,s)=>{const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))console.warn(gl.getShaderInfoLog(o));return o};
+  const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(pr);gl.useProgram(pr);
+  const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+  const loc=gl.getAttribLocation(pr,"p");gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  const U=k=>gl.getUniformLocation(pr,k),uR=U("R"),uT=U("T"),uM=U("M"),uD=U("D"),uN=U("N"),uW=U("W");
+  const waves=new Float32Array(48);let wi=0;const t0=performance.now();const now=()=>(performance.now()-t0)/1000;
+  let scale=.5,W=0,Hh=0;
+  function size(){const r=hero.getBoundingClientRect(),q=Math.min(devicePixelRatio||1,2)*scale;W=cv.width=Math.max(2,Math.round(r.width*q));Hh=cv.height=Math.max(2,Math.round(r.height*q));gl.viewport(0,0,W,Hh)}
+  size();addEventListener("resize",size);
+  // pointer state, in shader units (y up, divided by height)
+  let mx=.5,my=.5,tmx=.6,tmy=.55,D=0,lastMove=0,moved=false,lastEmit=0,night=0,nightT=0,inside=false;
+  const read=document.getElementById("cread"),readT=document.getElementById("creadT"),skin=document.getElementById("heroSkin");
+  function emit(x,y,a){waves.set([x,y,now(),a],wi*4);wi=(wi+1)%12}
+  function toUnits(e){const r=hero.getBoundingClientRect();return[(e.clientX-r.left)/r.height,(r.bottom-e.clientY)/r.height,e.clientX-r.left,e.clientY-r.top,r]}
+  // shiver detector: fast direction reversals
+  let lastX=0,dir=0,flips=[];
+  hero.addEventListener("pointermove",e=>{const[x,y,px,py,r]=toUnits(e);const dx=Math.hypot(x-tmx,y-tmy);tmx=x;tmy=y;inside=true;
+    if(dx>.004){moved=true;lastMove=now();D*=.94;if(now()-lastEmit>.11){emit(x,y,.25);lastEmit=now()}}
+    if(read){read.style.left=px+"px";read.style.top=py+"px"}
+    const nx=px/r.width-.5,ny=py/r.height-.5;hero.style.setProperty("--ry",(nx*4).toFixed(2)+"deg");hero.style.setProperty("--rx",(-ny*3).toFixed(2)+"deg");
+    const d=Math.sign(e.clientX-lastX);if(d&&d!==dir){dir=d;const t=now();flips.push(t);flips=flips.filter(f=>t-f<.7);if(flips.length>8){flips=[];egg.hit("shiver","Shiver","Shivering detected. Glacis noticed before you did.")}}lastX=e.clientX});
+  hero.addEventListener("pointerleave",()=>{inside=false;hero.style.setProperty("--rx","0deg");hero.style.setProperty("--ry","0deg")});
+  let clicks=0;
+  hero.addEventListener("pointerdown",e=>{if(e.target.closest("a,button"))return;const[x,y]=toUnits(e);emit(x,y,1.1);clicks++;if(clicks===3)egg.hit("wave","Ripple","Every wave is a reading. Glacis takes one every five seconds.")});
+  let warmHit=false;
+  function frame(){
+    const t=now();
+    mx+=(tmx-mx)*.12;my+=(tmy-my)*.12;
+    if(inside&&t-lastMove>.25){D=Math.min(1,D+.008);if(t-lastEmit>1.5-D*1.05){emit(tmx,tmy,.35+D*.5);lastEmit=t}}else if(!inside)D*=.97;
+    if(D>.97&&!warmHit){warmHit=true;egg.hit("warm","Warmth","You warmed the field by 2.4°C. Hands still are warm hands.")}
+    nightT+=(night-nightT)*.05;
+    const v=31.8+D*2.4;if(readT)readT.textContent=v.toFixed(1)+"°";if(skin)skin.textContent=v.toFixed(1)+"°C";
+    gl.uniform2f(uR,W,Hh);gl.uniform1f(uT,t);gl.uniform2f(uM,mx*(W/Hh)/(W/Hh),my);gl.uniform1f(uD,D);gl.uniform1f(uN,nightT);gl.uniform4fv(uW,waves);
+    gl.drawArrays(gl.TRIANGLES,0,3)}
+  // adapt resolution if the device struggles
+  let on=false,raf=0,fr=0,ft=performance.now();
+  const loop=()=>{if(!on)return;if(document.body.classList.contains("locked")){raf=requestAnimationFrame(loop);return}cv.classList.add("on");frame();
+    fr++;const n=performance.now();if(n-ft>2000){const fps=fr*1000/(n-ft);if(fps<40&&scale>.3){scale-=.1;size()}fr=0;ft=n}raf=requestAnimationFrame(loop)};
+  new IntersectionObserver(es=>{on=es[0].isIntersecting;cancelAnimationFrame(raf);if(on)raf=requestAnimationFrame(loop)}).observe(hero);
+  if(reduce){on=false;setTimeout(()=>{cv.classList.add("on");frame()},50)}
+  // N: polar night
+  addEventListener("keydown",e=>{if(e.target.closest("input,textarea"))return;if(e.key==="n"||e.key==="N"){night=night?0:1;if(reduce){nightT=night;frame()}
+    egg.hit("night","Polar night",night?"The sun is down for the season. Press N for day.":"Daylight. Press N for polar night.")}});
+})();
+
+/* ---------- 3D tilt on the instruments ---------- */
+document.querySelectorAll(".scope,.cam").forEach(el=>{if(reduce)return;el.classList.add("tilt");
+  el.addEventListener("pointermove",e=>{const r=el.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
+    el.style.setProperty("--ty",((x-.5)*10).toFixed(2)+"deg");el.style.setProperty("--tx",((.5-y)*8).toFixed(2)+"deg");el.style.setProperty("--gx",x*100+"%");el.style.setProperty("--gy",y*100+"%")});
+  el.addEventListener("pointerleave",()=>{el.style.setProperty("--tx","0deg");el.style.setProperty("--ty","0deg")})});
+
+/* ---------- easter eggs ---------- */
+// −40: the one number both scales agree on
+(()=>{const m=document.getElementById("minus"),cap=document.getElementById("minusCap");if(!m)return;let n=0;
+  const show=()=>{cap.classList.add("on");if(++n===1)egg.hit("minus40","−40°","Celsius or Fahrenheit, it is the same number. The only one.")};
+  m.addEventListener("pointerenter",show);m.addEventListener("click",show)})();
+// the logo, five times
+(()=>{const a=document.querySelector('.nav a[href="#top"]');if(!a)return;let c=0,t=0;
+  a.addEventListener("click",()=>{clearTimeout(t);t=setTimeout(()=>c=0,1500);if(++c===5){c=0;egg.hit("logo","Field log","Day 1 · Ontario ice · −27°C · ten of ten fingers accounted for.")}})})();
+// type "cold": the whole screen frosts over, then thaws
+(()=>{let buf="";const cv=document.createElement("canvas");cv.className="frostall";cv.setAttribute("aria-hidden","true");document.body.appendChild(cv);
+  function frost(){const W=cv.width=innerWidth,H=cv.height=innerHeight,ctx=cv.getContext("2d");let s=11;const R=()=>(s=(s*16807)%2147483647)/2147483647;const segs=[];
+    const br=(x,y,a,l,d,acc)=>{const x2=x+Math.cos(a)*l,y2=y+Math.sin(a)*l;segs.push([x,y,x2,y2,d,acc+l]);if(d<6&&l>4){br(x2,y2,a+(R()-.5)*.25,l*.78,d+1,acc+l);const mx=(x+x2)/2,my=(y+y2)/2;if(R()<.8)br(mx,my,a+1.047,l*.5,d+1,acc+l/2);if(R()<.8)br(mx,my,a-1.047,l*.5,d+1,acc+l/2)}};
+    for(let i=0;i<Math.round((W+H)/14);i++){const e=i%4,u=R();e===0?br(u*W,0,1.57+(R()-.5),22+R()*34,0,0):e===1?br(u*W,H,-1.57+(R()-.5),22+R()*34,0,0):e===2?br(0,u*H,(R()-.5),22+R()*34,0,0):br(W,u*H,3.14+(R()-.5),22+R()*34,0,0)}
+    segs.sort((a,b)=>a[5]-b[5]);const max=segs[segs.length-1][5];cv.classList.add("on");const st=performance.now();
+    const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.2,W/2,H/2,Math.max(W,H)*.75);g.addColorStop(0,"rgba(228,242,246,0)");g.addColorStop(1,"rgba(228,242,246,.55)");
+    const step=ts=>{const k=Math.min(1,(ts-st)/2600);ctx.clearRect(0,0,W,H);ctx.fillStyle=g;ctx.globalAlpha=k;ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;ctx.lineCap="round";
+      for(const s of segs){if(s[5]>k*max)break;ctx.strokeStyle=`rgba(244,250,252,${(.75-s[4]*.08).toFixed(2)})`;ctx.lineWidth=Math.max(.7,2-s[4]*.25);ctx.beginPath();ctx.moveTo(s[0],s[1]);ctx.lineTo(s[2],s[3]);ctx.stroke()}
+      if(k<1)requestAnimationFrame(step);else setTimeout(()=>cv.classList.remove("on"),2600)};requestAnimationFrame(step)}
+  addEventListener("keydown",e=>{if(e.target.closest("input,textarea")||e.key.length!==1)return;buf=(buf+e.key.toLowerCase()).slice(-4);if(buf==="cold"){buf="";frost();egg.hit("cold","−40°C","Your screen froze. Glacis would have buzzed eleven minutes ago.")}})})();
+// for the curious
+console.log("%cGlacis%c\nStay out longer.\n\nYou found the console. Seven things are hidden on the page; this is not one of them.\nTry: rest your cursor on the field. Click it. Shiver. Type cold. Press N.","font:500 28px Inter Tight,sans-serif;color:#1D5C78","font:13px IBM Plex Mono,monospace;color:#4F5B66");
+
 /* ---------- copy email ---------- */
 document.getElementById("copy").onclick=async e=>{const t=document.getElementById("addr").textContent;
   try{await navigator.clipboard.writeText(t);e.target.textContent="Copied"}catch(err){const r=document.createRange();r.selectNodeContents(document.getElementById("addr"));const s=getSelection();s.removeAllRanges();s.addRange(r);e.target.textContent="Selected"}

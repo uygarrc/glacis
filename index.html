@@ -181,18 +181,36 @@ h3{font-weight:500;font-size:20px;line-height:1.3;letter-spacing:-.01em}
 .risk.on{opacity:1}
 .risk::before{content:"";width:6px;height:6px;border-radius:50%;background:#fff;animation:beat 1.2s ease-in-out infinite}
 /* the evidence: one calm statement beside three sourced numbers, read like a report */
-.facts{background:var(--night);color:var(--night-ink)}
+.facts{position:relative;isolation:isolate;overflow:hidden;background:var(--night);color:var(--night-ink)}
+/* a cold, drained thermal field drifts behind the numbers: the last of the colour leaving the skin */
+.facts::before{content:"";position:absolute;inset:-10%;z-index:-1;background:url(thermal.jpg) center/cover no-repeat;filter:saturate(.35) brightness(.3) contrast(1.2);opacity:.55;
+  -webkit-mask-image:radial-gradient(70% 60% at 78% 40%,#000 0%,transparent 75%);mask-image:radial-gradient(70% 60% at 78% 40%,#000 0%,transparent 75%);animation:drift 40s ease-in-out infinite alternate}
+@keyframes drift{from{transform:scale(1.05) translate(-1.5%,0)}to{transform:scale(1.12) translate(1.5%,-1.5%)}}
+.facts .left{display:grid;gap:clamp(28px,4vw,44px);align-content:start}
+.facts .say .w{transition:opacity .5s ease,color .5s ease}
+.facts .say .w.numb{opacity:.28}
+/* the feeling trace: a live signal that flattens as you scroll */
+.trace{display:grid;gap:10px}
+.trace .row{display:flex;justify-content:space-between;gap:12px;font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--night-muted)}
+.trace .row b{font-weight:500;color:var(--night-accent);transition:color .4s}
+.trace.gone .row b{color:var(--night-muted)}
+.trace canvas{width:100%;height:96px;display:block}
 .facts .in{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);column-gap:clamp(40px,7vw,112px);row-gap:40px;padding-block:clamp(72px,10vw,128px) clamp(64px,8vw,104px);align-items:start}
 .facts .say{margin:0;font:400 clamp(24px,2.6vw,32px)/1.22 var(--f-display);letter-spacing:-.025em;color:var(--night-ink);max-width:20ch;text-wrap:balance}
 .facts .say em{font-style:normal;color:var(--night-muted)}
 .facts dl{margin:0;display:grid}
-.facts .f{display:grid;grid-template-columns:minmax(120px,auto) minmax(0,1fr);column-gap:32px;align-items:baseline;border-top:1px solid var(--night-line);padding-block:24px 26px}
+.facts .f{position:relative;display:grid;grid-template-columns:minmax(150px,auto) minmax(0,1fr);column-gap:32px;align-items:baseline;border-top:1px solid var(--night-line);padding-block:28px 30px}
+/* each rule line carries a little heat that drains away as the number lands */
+.facts .f::before{content:"";position:absolute;left:0;top:-1px;height:1px;width:100%;background:linear-gradient(90deg,#5CC2DA,#1D5C78 45%,transparent 80%);transform-origin:left;transform:scaleX(0);opacity:0}
+.facts .f.in-view::before{animation:drain 2.4s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes drain{0%{transform:scaleX(0);opacity:1}55%{transform:scaleX(1);opacity:1}100%{transform:scaleX(1);opacity:0}}
 .facts .f:last-child{border-bottom:1px solid var(--night-line)}
-.facts dt{font:300 clamp(40px,4.2vw,56px)/1 var(--f-display);letter-spacing:-.045em;font-variant-numeric:tabular-nums;color:var(--night-accent)}
+.facts dt{font:200 clamp(52px,6vw,84px)/.95 var(--f-display);letter-spacing:-.05em;font-variant-numeric:tabular-nums;color:var(--night-accent)}
 .facts dd{margin:0;color:var(--night-muted);font-size:16px;line-height:24px;max-width:40ch}
 .facts a{color:var(--night-ink);text-decoration-color:rgba(228,242,246,.35);text-underline-offset:3px;font-size:13px;white-space:nowrap}
 .facts a:hover{text-decoration-color:currentColor}
 @media (max-width:860px){.facts .in{grid-template-columns:1fr}.facts .f{grid-template-columns:1fr;row-gap:8px}}
+@media (prefers-reduced-motion:reduce){.facts::before{animation:none}.facts .f.in-view::before{animation:none}.facts .say .w{transition:none}}
 .thaw{height:clamp(56px,7vw,112px);background:linear-gradient(180deg,var(--night),var(--surface))}
 
 /* ============ 2 · how: one instrument, three moments. The window stays put while the steps scroll past it ============ */
@@ -421,11 +439,14 @@ body.entered .nav{animation:rise .9s .2s cubic-bezier(.2,.7,.2,1) both}
   </section>
   <div class="facts">
     <div class="in">
-      <p class="say">Frostbite does not hurt while it happens. <em>Numb skin stops sending the signal, so most people find out once the damage is done.</em></p>
+      <div class="left">
+        <p class="say" id="say">Frostbite does not hurt while it happens. <em>Numb skin stops sending the signal, so most people find out once the damage is done.</em></p>
+        <div class="trace" id="trace" aria-hidden="true"><div class="row"><span>Feeling · little finger</span><b id="traceS">Clear</b></div><canvas></canvas></div>
+      </div>
       <dl>
-        <div class="f"><dt>806</dt><dd>US service members had a cold-weather injury in one year, mostly frostbite. <a href="https://health.mil/News/Articles/2025/12/01/MSMR-Cold-Weather-Injuries?page=15">MSMR, 2025</a></dd></div>
-        <div class="f"><dt>+42%</dt><dd>Rise in that injury rate over the year before. <a href="https://health.mil/News/Articles/2025/12/01/MSMR-Cold-Weather-Injuries?page=15">MSMR, 2025</a></dd></div>
-        <div class="f"><dt>19</dt><dd>Frostbite amputations in Winnipeg in one winter, a ten-year high. <a href="https://www.theweathernetwork.com/en/news/lifestyle/health/frostbite-amputations-hit-10-year-high-in-winnipeg-last-winter-data-suggests">Weather Network</a></dd></div>
+        <div class="f"><dt data-n="806">806</dt><dd>US service members had a cold-weather injury in one year, mostly frostbite. <a href="https://health.mil/News/Articles/2025/12/01/MSMR-Cold-Weather-Injuries?page=15">MSMR, 2025</a></dd></div>
+        <div class="f"><dt data-n="42" data-pre="+" data-suf="%">+42%</dt><dd>Rise in that injury rate over the year before. <a href="https://health.mil/News/Articles/2025/12/01/MSMR-Cold-Weather-Injuries?page=15">MSMR, 2025</a></dd></div>
+        <div class="f"><dt data-n="19">19</dt><dd>Frostbite amputations in Winnipeg in one winter, a ten-year high. <a href="https://www.theweathernetwork.com/en/news/lifestyle/health/frostbite-amputations-hit-10-year-high-in-winnipeg-last-winter-data-suggests">Weather Network</a></dd></div>
       </dl>
     </div>
   </div>
@@ -842,6 +863,33 @@ document.getElementById("copy").onclick=async e=>{const t=document.getElementByI
 </script>
 
 <script>
+/* ---------- 1b · the evidence: words go numb, the feeling trace flattens, the numbers count in ---------- */
+(()=>{const box=document.querySelector(".facts"),say=document.getElementById("say"),tr=document.getElementById("trace"),cv=tr.querySelector("canvas"),st=document.getElementById("traceS");
+  /* split the second sentence into words so they can fade one by one, like feeling leaving */
+  const em=say.querySelector("em");em.innerHTML=em.textContent.split(" ").map(w=>`<span class="w">${w}</span>`).join(" ");const W=[...em.querySelectorAll(".w")];
+  const ctx=cv.getContext("2d");let p=0,on=false,raf=0,last=0;
+  const prog=()=>{const r=box.getBoundingClientRect(),h=innerHeight;return clamp((h*.9-r.top)/(h*.9),0,1)};
+  function draw(ts){const w=cv.clientWidth,h=cv.clientHeight,d=Math.min(devicePixelRatio||1,2);if(cv.width!==Math.round(w*d)){cv.width=Math.round(w*d);cv.height=Math.round(h*d)}
+    ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,w,h);const t=reduce?0:ts/1000,amp=Math.max(0,1-p*1.15),mid=h/2;
+    ctx.strokeStyle="rgba(157,176,188,.18)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,mid);ctx.lineTo(w,mid);ctx.stroke();
+    const g=ctx.createLinearGradient(0,0,w,0);g.addColorStop(0,"#E4F2F6");g.addColorStop(.45,"#5CC2DA");g.addColorStop(.8,"#1D5C78");g.addColorStop(1,"#262D35");
+    ctx.strokeStyle=g;ctx.lineWidth=2;ctx.beginPath();
+    for(let x=0;x<=w;x+=2){const k=x/w,fall=amp*(1-k*.55);
+      const y=mid-(Math.sin(x*.09-t*4)*.55+Math.sin(x*.031-t*2.2)*.35+Math.sin(x*.21-t*7)*.1)*fall*h*.4;x?ctx.lineTo(x,y):ctx.moveTo(x,y)}
+    ctx.stroke();
+    const n=Math.floor(p*1.25*W.length);W.forEach((e,i)=>e.classList.toggle("numb",i<n));
+    const gone=amp<.05;tr.classList.toggle("gone",gone);st.textContent=gone?"No signal":amp<.5?"Fading":"Clear"}
+  function loop(ts){if(!on)return;raf=requestAnimationFrame(loop);if(ts-last<33)return;last=ts;p=prog();draw(ts)}
+  new IntersectionObserver(es=>{on=es[0].isIntersecting;if(on)raf=requestAnimationFrame(loop);else cancelAnimationFrame(raf)}).observe(box);
+  if(reduce)addEventListener("scroll",()=>{p=prog();draw(0)},{passive:true});
+  /* numbers count in once, when their row arrives */
+  const rows=[...box.querySelectorAll(".f")];
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)return;io.unobserve(e.target);e.target.classList.add("in-view");
+    const dt=e.target.querySelector("dt"),n=+dt.dataset.n,pre=dt.dataset.pre||"",suf=dt.dataset.suf||"";if(reduce)return;
+    const t0=performance.now(),dur=1400;const tick=now=>{const k=Math.min(1,(now-t0)/dur),v=Math.round(n*(1-Math.pow(1-k,3)));dt.textContent=pre+v+suf;if(k<1)requestAnimationFrame(tick)};
+    dt.textContent=pre+"0"+suf;requestAnimationFrame(tick)}),{threshold:.6});
+  rows.forEach(r=>io.observe(r))})();
+
 /* ---------- 2 · how: a bare hand, drawn live in WebGL, that turns as you scroll ----------
    Skin heat shows as a thermal-camera layer in the brand's thermal colours. Sense: the fingertip points light up.
    Read: the ring finger cools to deep teal.

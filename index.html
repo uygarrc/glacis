@@ -124,6 +124,9 @@ h3{font-weight:500;font-size:20px;line-height:1.3;letter-spacing:-.01em}
 .marker::before{content:"";width:9px;height:9px;border-radius:50%;border:1.5px solid currentColor;flex:none}
 .marker::after{content:"";height:1px;flex:1;max-width:120px;background:currentColor;opacity:.4}
 .marker .sep{opacity:.45;margin-inline:2px}
+/* chapter label: a quiet sentence-case title on a hairline, used instead of the mono clock marker */
+.chapter{display:flex;align-items:center;gap:16px;margin:0;font:500 15px/20px var(--f-display);letter-spacing:-.005em;color:var(--ink-muted)}
+.chapter::after{content:"";height:1px;flex:1;background:currentColor;opacity:.28}
 /* ---------- nav ---------- */
 .nav{position:absolute;inset:0 0 auto;z-index:5}
 .nav .in{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:20px}
@@ -162,8 +165,9 @@ h3{font-weight:500;font-size:20px;line-height:1.3;letter-spacing:-.01em}
 @media (max-width:700px){.numb .bg{background-image:url(thermal-portrait.jpg)}}
 .numb .stick::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(11,17,22,0) 30%,rgba(11,17,22,.85) 100%);opacity:calc(.35 + var(--p)*.65)}
 .numb .in{height:100%;display:grid;grid-template-rows:auto 1fr auto;padding-block:clamp(72px,10vh,120px) clamp(40px,7vh,72px)}
-.numb .marker{color:var(--tone,#1D5C78)}
-.numb .marker,.temp,.lines p,.numb .read .label{transition:color .6s ease,text-shadow .6s ease}
+[data-brand="bold"] .numb .in{padding-top:calc(64px + clamp(28px,5vh,56px))}
+.numb .chapter{color:var(--tone,#262D35)}
+.numb .chapter,.temp,.lines p,.numb .read .label{transition:color .6s ease,text-shadow .6s ease}
 .numb .stick.dark .temp,.numb .stick.dark .lines p{text-shadow:0 2px 30px rgba(11,17,22,.45)}
 .numb .read{align-self:center;display:grid;gap:6px}
 .numb .read .label{color:var(--tone,#262D35);opacity:.8}
@@ -176,24 +180,51 @@ h3{font-weight:500;font-size:20px;line-height:1.3;letter-spacing:-.01em}
 .risk{justify-self:start;display:inline-flex;align-items:center;gap:8px;margin-top:14px;border-radius:999px;padding:6px 14px;background:var(--risk);color:#fff;font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;opacity:0;transition:opacity .4s ease}
 .risk.on{opacity:1}
 .risk::before{content:"";width:6px;height:6px;border-radius:50%;background:#fff;animation:beat 1.2s ease-in-out infinite}
+/* the evidence: one calm statement beside three sourced numbers, read like a report */
 .facts{background:var(--night);color:var(--night-ink)}
-.facts .in{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px;padding-block:72px 120px}
-.facts .f{display:grid;gap:10px;border-top:1px solid var(--night-line);padding-top:20px;align-content:start}
-.facts b{font:300 clamp(44px,5vw,64px)/1 var(--f-mono);letter-spacing:-.04em;color:var(--night-accent)}
-.facts span{color:var(--night-muted);font-size:15px;line-height:22px}
-.facts a{color:var(--night-accent);font-size:13px}
-@media (max-width:820px){.facts .in{grid-template-columns:1fr}}
-.thaw{height:clamp(120px,16vw,220px);background:linear-gradient(180deg,var(--night),var(--surface))}
+.facts .in{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);column-gap:clamp(40px,7vw,112px);row-gap:40px;padding-block:clamp(72px,10vw,128px) clamp(64px,8vw,104px);align-items:start}
+.facts .say{margin:0;font:400 clamp(24px,2.6vw,32px)/1.22 var(--f-display);letter-spacing:-.025em;color:var(--night-ink);max-width:20ch;text-wrap:balance}
+.facts .say em{font-style:normal;color:var(--night-muted)}
+.facts dl{margin:0;display:grid}
+.facts .f{display:grid;grid-template-columns:minmax(120px,auto) minmax(0,1fr);column-gap:32px;align-items:baseline;border-top:1px solid var(--night-line);padding-block:24px 26px}
+.facts .f:last-child{border-bottom:1px solid var(--night-line)}
+.facts dt{font:300 clamp(40px,4.2vw,56px)/1 var(--f-display);letter-spacing:-.045em;font-variant-numeric:tabular-nums;color:var(--night-accent)}
+.facts dd{margin:0;color:var(--night-muted);font-size:16px;line-height:24px;max-width:40ch}
+.facts a{color:var(--night-ink);text-decoration-color:rgba(228,242,246,.35);text-underline-offset:3px;font-size:13px;white-space:nowrap}
+.facts a:hover{text-decoration-color:currentColor}
+@media (max-width:860px){.facts .in{grid-template-columns:1fr}.facts .f{grid-template-columns:1fr;row-gap:8px}}
+.thaw{height:clamp(56px,7vw,112px);background:linear-gradient(180deg,var(--night),var(--surface))}
 
-/* ============ 2 · how: three live instrument windows ============ */
-.how{padding-block:72px 128px}
-.how .head{display:grid;gap:20px;max-width:760px;margin-bottom:56px}
-.windows{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
-.win{display:grid;gap:18px;align-content:start;min-width:0}
+/* ============ 2 · how: one instrument, three moments. The window stays put while the steps scroll past it ============ */
+.how{padding-block:clamp(48px,6vw,88px) clamp(80px,10vw,136px)}
+.how .head{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);column-gap:clamp(40px,7vw,112px);row-gap:28px;align-items:end}
+.how .head .chapter{grid-column:1/-1;margin-bottom:12px}
+.how .head .lead{max-width:44ch;padding-bottom:6px}
+.steps{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);column-gap:clamp(40px,7vw,112px);margin-top:clamp(40px,6vw,72px)}
+.step{display:contents}
 .scope{position:relative;aspect-ratio:4/5;max-width:100%;border-radius:6px;overflow:hidden;background:var(--night);color:var(--night-ink)}
+.steps .scope{grid-column:1;grid-row:1/4;align-self:start;position:sticky;
+  width:min(100%,calc((100svh - 160px) * .8));opacity:0;pointer-events:none;transition:opacity .6s ease,transform .5s cubic-bezier(.2,.7,.2,1),box-shadow .5s}
+.steps .scope{top:clamp(88px,calc(50svh - 300px),240px)}
+.steps .scope.on{opacity:1;z-index:1;pointer-events:auto}
+.steps .txt{grid-column:2;min-height:min(78svh,720px);display:grid;align-content:center;gap:14px;max-width:46ch;opacity:.32;transition:opacity .5s ease}
+.steps .txt.on{opacity:1}
+.step:nth-child(1) .txt{grid-row:1}.step:nth-child(2) .txt{grid-row:2}.step:nth-child(3) .txt{grid-row:3}
+.txt .k{display:flex;align-items:baseline;gap:12px;font:500 15px/20px var(--f-display);color:var(--brand-deep)}
+.txt .k small{font:inherit;color:var(--ink-muted);opacity:.7}
+.txt h3{font-weight:400;font-size:clamp(28px,3vw,40px);line-height:1.1;letter-spacing:-.03em}
+.txt p{margin:0;color:var(--ink-muted);font-size:17px;line-height:27px}
 .scope canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .scope .cap{position:absolute;left:14px;right:14px;top:12px;display:flex;justify-content:space-between;gap:8px;color:var(--night-muted);font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;z-index:2}
 .scope .cap b{color:var(--night-ink);font-weight:500}
+@media (max-width:900px){
+  .how .head{grid-template-columns:1fr}
+  .steps{display:grid;grid-template-columns:1fr;gap:56px;max-width:520px}
+  .step{display:grid;gap:22px}
+  .steps .scope{position:relative;top:auto;grid-row:auto;width:100%;opacity:1;pointer-events:auto}
+  .steps .txt{grid-row:auto!important;min-height:0;opacity:1}
+  .steps .scope,.steps .txt{grid-column:auto}}
+@media (prefers-reduced-motion:reduce){.steps .scope,.steps .txt{transition:none}}
 .dot{position:absolute;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;border:1.5px solid #E4F2F6;z-index:2}
 .dot::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:1px solid #E4F2F6;opacity:0;animation:ping 2.4s ease-out infinite}
 @keyframes ping{0%{transform:scale(.4);opacity:.9}100%{transform:scale(1.6);opacity:0}}
@@ -210,9 +241,6 @@ h3{font-weight:500;font-size:20px;line-height:1.3;letter-spacing:-.01em}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-1.5px)}75%{transform:translateX(1.5px)}}
 .scope.buzz .word{color:var(--caution)}.scope.buzz .led{background:var(--caution);box-shadow:0 0 14px var(--caution)}
 .sentence{position:absolute;left:14px;right:14px;bottom:14px;font-size:14px;line-height:20px;color:var(--night-ink);z-index:2;min-height:40px}
-.win .label{color:var(--brand-deep)}
-.win p{margin:0;color:var(--ink-muted);max-width:36ch}
-@media (max-width:900px){.windows{grid-template-columns:1fr;max-width:460px}}
 
 /* ============ 3 · live: the thermal-camera hand ============ */
 .live{background:var(--night);color:var(--night-ink);padding-block:128px 0;position:relative}
@@ -366,7 +394,7 @@ body.entered .nav{animation:rise .9s .2s cubic-bezier(.2,.7,.2,1) both}
     <div class="stick" id="stick">
       <div class="bg" aria-hidden="true"></div><div class="bg cold" aria-hidden="true"></div>
       <div class="in">
-        <div class="marker label">09:40<span class="sep">·</span>−18°C<span class="sep">·</span>The problem</div>
+        <p class="chapter">The problem</p>
         <div class="read" aria-hidden="true">
           <span class="label">Skin temp · little finger</span>
           <div class="temp" id="numbT">31.8<small>°C</small></div>
@@ -382,9 +410,12 @@ body.entered .nav{animation:rise .9s .2s cubic-bezier(.2,.7,.2,1) both}
   </section>
   <div class="facts">
     <div class="in">
-      <div class="f"><b>806</b><span>US service members had a cold-weather injury in one year, mostly frostbite. <a href="https://health.mil/News/Articles/2025/12/01/MSMR-Cold-Weather-Injuries?page=15">MSMR, 2025</a></span></div>
-      <div class="f"><b>+42%</b><span>Rise in that injury rate over the year before. <a href="https://health.mil/News/Articles/2025/12/01/MSMR-Cold-Weather-Injuries?page=15">MSMR, 2025</a></span></div>
-      <div class="f"><b>19</b><span>Frostbite amputations in Winnipeg in one winter, a ten-year high. <a href="https://www.theweathernetwork.com/en/news/lifestyle/health/frostbite-amputations-hit-10-year-high-in-winnipeg-last-winter-data-suggests">Weather Network</a></span></div>
+      <p class="say">Frostbite does not hurt while it happens. <em>Numb skin stops sending the signal, so most people find out once the damage is done.</em></p>
+      <dl>
+        <div class="f"><dt>806</dt><dd>US service members had a cold-weather injury in one year, mostly frostbite. <a href="https://health.mil/News/Articles/2025/12/01/MSMR-Cold-Weather-Injuries?page=15">MSMR, 2025</a></dd></div>
+        <div class="f"><dt>+42%</dt><dd>Rise in that injury rate over the year before. <a href="https://health.mil/News/Articles/2025/12/01/MSMR-Cold-Weather-Injuries?page=15">MSMR, 2025</a></dd></div>
+        <div class="f"><dt>19</dt><dd>Frostbite amputations in Winnipeg in one winter, a ten-year high. <a href="https://www.theweathernetwork.com/en/news/lifestyle/health/frostbite-amputations-hit-10-year-high-in-winnipeg-last-winter-data-suggests">Weather Network</a></dd></div>
+      </dl>
     </div>
   </div>
   <div class="thaw" aria-hidden="true"></div>
@@ -393,31 +424,31 @@ body.entered .nav{animation:rise .9s .2s cubic-bezier(.2,.7,.2,1) both}
   <section class="how" id="how" aria-labelledby="h-how">
     <div class="in">
       <div class="head">
-        <div class="marker label">11:15<span class="sep">·</span>−21°C<span class="sep">·</span>How it works</div>
+        <p class="chapter">How it works</p>
         <h2 id="h-how">Know before it bites.</h2>
-        <p class="lead">Glacis feels the cold for you. It senses every fingertip, reads the trend, and speaks up while there is still time.</p>
+        <p class="lead">Glacis feels the cold for you. It keeps watch, reads the trend, and speaks up while there is still time to act.</p>
       </div>
-      <div class="windows">
-        <article class="win">
-          <div class="scope" id="w1"><div class="cap"><span>Sense</span><b>5 tips · every 5 s</b></div><canvas aria-hidden="true"></canvas></div>
-          <span class="label">01 · Sense</span>
-          <h3>Thin sensors at each fingertip</h3>
-          <p>They sit in the glove liner. The wrist band holds the battery and does the thinking.</p>
-        </article>
-        <article class="win">
+      <div class="steps">
+        <div class="step">
+          <div class="scope on" id="w1"><div class="cap"><span>Sense</span><b>Fingertips · live</b></div><canvas aria-hidden="true"></canvas></div>
+          <div class="txt on"><span class="k">Sense <small>1 of 3</small></span>
+            <h3>It keeps watch on your hands.</h3>
+            <p>Quietly, the whole time you are out. You keep your mind on the climb, the route or the job.</p></div>
+        </div>
+        <div class="step">
           <div class="scope" id="w2"><div class="cap"><span>Read · ring finger</span><b id="w2rate">−0.6°C/min</b></div><canvas aria-hidden="true"></canvas><div class="big-read" id="w2v">24.6°</div></div>
-          <span class="label">02 · Read</span>
-          <h3>The trend, not one number</h3>
-          <p>Glacis weighs how fast each finger is cooling against wind and ambient temperature.</p>
-        </article>
-        <article class="win">
-          <div class="scope" id="w3"><div class="cap"><span>Warn · on the band</span><b>Vibration · light</b></div>
+          <div class="txt"><span class="k">Read <small>2 of 3</small></span>
+            <h3>It reads the trend, not one number.</h3>
+            <p>How fast you are cooling matters more than where you are right now, so Glacis weighs the change against the wind and the air around you.</p></div>
+        </div>
+        <div class="step">
+          <div class="scope" id="w3"><div class="cap"><span>Warn</span><b>Vibration · light</b></div>
             <div class="band" aria-hidden="true"><span class="ring"></span><span class="ring"></span><span class="ring"></span><div class="face"><span class="led"></span><span class="word" id="w3w">Normal</span></div></div>
             <p class="sentence" id="w3s">All fingers are warm.</p></div>
-          <span class="label">03 · Warn</span>
-          <h3>A calm, early nudge</h3>
-          <p>A vibration you can feel through a mitt, one word on the band, and a plain sentence in the app.</p>
-        </article>
+          <div class="txt"><span class="k">Warn <small>3 of 3</small></span>
+            <h3>It speaks up early, and calmly.</h3>
+            <p>A vibration you can feel through a mitt, a small light, and one plain sentence. Early enough to warm up and keep going.</p></div>
+        </div>
       </div>
     </div>
   </section>
@@ -554,6 +585,10 @@ function whenVisible(el,fn){let on=false,raf=0,last=0;const loop=ts=>{if(!on)ret
   let q=false;const upd=()=>{q=false;const r=sec.getBoundingClientRect();set(clamp(-r.top/(r.height-innerHeight),0,1))};
   addEventListener("scroll",()=>{if(!q){q=true;requestAnimationFrame(upd)}},{passive:true});addEventListener("resize",upd);upd()})();
 
+/* ---------- 2 · how: the window follows whichever step is in the middle of the screen ---------- */
+(()=>{const steps=[...document.querySelectorAll(".step")];
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)return;steps.forEach(s=>{const on=s.contains(e.target);s.querySelector(".scope").classList.toggle("on",on);s.querySelector(".txt").classList.toggle("on",on)})}),{rootMargin:"-45% 0px -45% 0px"});
+  steps.forEach(s=>io.observe(s.querySelector(".txt")))})();
 /* ---------- 2 · how: three windows ---------- */
 (()=>{const w1=document.getElementById("w1"),th=new Thermal(w1.querySelector("canvas"));
   HAND.fingers.forEach(f=>{const d=document.createElement("span");d.className="dot";d.style.left=f.t[0]/180*100+"%";d.style.top=(f.t[1]+OY)/220*100+"%";w1.appendChild(d)});

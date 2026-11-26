@@ -201,7 +201,7 @@ h3{font-weight:500;font-size:20px;line-height:1.3;letter-spacing:-.01em}
 .how .head .chapter{grid-column:1/-1;margin-bottom:12px}
 .how .head .lead{max-width:44ch;padding-bottom:6px}
 .steps{display:grid;grid-template-columns:minmax(0,6fr) minmax(0,6fr);column-gap:clamp(40px,7vw,112px);margin-top:clamp(40px,6vw,72px)}
-/* the stage: one 3D glove that turns as you scroll and glows with skin temperature */
+/* the stage: a 3D hand that turns as you scroll and glows with skin temperature */
 .stage{grid-column:1;grid-row:1/4;align-self:start;position:sticky;top:clamp(88px,calc(50svh - 300px),240px);
   width:min(100%,calc((100svh - 160px) * .8));aspect-ratio:4/5;border-radius:6px;overflow:hidden;color:var(--night-ink);
   background:radial-gradient(70% 55% at 50% 42%,#13303D 0%,#0D1B23 45%,#0B1116 100%);touch-action:pan-y;cursor:grab}
@@ -842,16 +842,16 @@ document.getElementById("copy").onclick=async e=>{const t=document.getElementByI
 </script>
 
 <script>
-/* ---------- 2 · how: a realistic insulated glove, drawn live in WebGL, that turns as you scroll ----------
-   Quilted shell, grippy palm, ribbed cuff and the band on the wrist. Skin heat glows through the fabric in the
-   brand's thermal colours. Sense: the fingertip points light up. Read: the ring finger cools to deep teal.
-   Warn: it pulses alert orange and the band buzzes (orange is only ever used for frostbite risk). */
+/* ---------- 2 · how: a bare hand, drawn live in WebGL, that turns as you scroll ----------
+   Skin heat shows as a thermal-camera layer in the brand's thermal colours. Sense: the fingertip points light up.
+   Read: the ring finger cools to deep teal.
+   Warn: the ring fingertip pulses alert orange (orange is only ever used for frostbite risk). */
 (()=>{const stage=document.getElementById("stage"),steps=document.getElementById("steps"),cv=document.getElementById("glove");
 const $=id=>document.getElementById(id),cap=$("stCap"),rate=$("stRate"),who=$("stWho"),val=$("stVal"),msg=$("stMsg");
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches,tx=[...steps.querySelectorAll(".txt")];
 const gl=cv.getContext("webgl",{antialias:false,premultipliedAlpha:true,alpha:true,powerPreference:"low-power"});
 let step=-1,shown="";
-const setStep=s=>{if(s===step)return;step=s;stage.dataset.step=s;tx.forEach((e,i)=>e.classList.toggle("on",i===s));cap.textContent=["Fingertips · live","Ring finger · trend","Alert · on the band"][s];
+const setStep=s=>{if(s===step)return;step=s;stage.dataset.step=s;tx.forEach((e,i)=>e.classList.toggle("on",i===s));cap.textContent=["Fingertips · live","Ring finger · trend","Alert · ring finger"][s];
   who.textContent=s?"Ring finger":"Coldest fingertip";msg.textContent=s===2?"Your ring finger dropped 2.1°C in ten minutes. Warm it before you continue.":""};
 /* progress follows the step text: each step's centre crossing the reading line maps to 1/6, 3/6, 5/6 */
 const prog=()=>{const y=innerHeight*(innerWidth<=900?.74:.5),c=tx.map(e=>{const r=e.getBoundingClientRect();return r.top+r.height/2});
@@ -868,95 +868,80 @@ mat2 rot(float a){float c=cos(a),s=sin(a);return mat2(c,-s,s,c);}
 float smin(float a,float b,float k){float h=clamp(.5+.5*(b-a)/k,0.,1.);return mix(b,a,h)-k*h*(1.-h);}
 float seg(vec3 p,vec3 a,vec3 b,float ra,float rb){vec3 pa=p-a,ba=b-a;float h=clamp(dot(pa,ba)/dot(ba,ba),0.,1.);return length(pa-ba*h)-mix(ra,rb,h);}
 float rbox(vec3 p,vec3 b,float r){vec3 q=abs(p)-b+r;return length(max(q,0.))+min(max(q.x,max(q.y,q.z)),0.)-r;}
-float finger(vec3 p,vec3 a,vec3 b,vec3 c,float r){return smin(seg(p,a,b,r,r*.95),seg(p,b,c,r*.95,r*.86),.06);}
-/* finger joints: base, knuckle, tip (the glove fingers curl a little toward the palm) */
-const vec3 I0=vec3(-.5,.66,0.),I1=vec3(-.55,1.17,-.05),I2=vec3(-.6,1.56,-.16);
-const vec3 M0=vec3(-.17,.7,0.),M1=vec3(-.17,1.27,-.05),M2=vec3(-.17,1.72,-.17);
-const vec3 R0=vec3(.17,.68,0.),R1=vec3(.19,1.21,-.05),R2=vec3(.21,1.62,-.16);
-const vec3 L0=vec3(.47,.6,0.),L1=vec3(.53,1.0,-.04),L2=vec3(.58,1.32,-.13);
-const vec3 T0=vec3(-.55,-.15,.06),T1=vec3(-.92,.2,.1),T2=vec3(-1.12,.54,.06);
-float dRing(vec3 p){return finger(p,R0,R1,R2,.2);}
-float glove(vec3 p){
-  float d=rbox(p-vec3(0.,.08,0.),vec3(.66,.62,.24),.2);
-  d=smin(d,finger(p,I0,I1,I2,.205),.13);d=smin(d,finger(p,M0,M1,M2,.21),.13);
-  d=smin(d,dRing(p),.13);d=smin(d,finger(p,L0,L1,L2,.18),.13);
-  d=smin(d,finger(p,T0,T1,T2,.22),.16);
-  /* wrist and cuff: an elliptical, slightly flared tube */
-  vec3 q=p-vec3(0.,-1.32,0.);float r=mix(.5,.74,clamp(-q.y*.8+.5,0.,1.));
-  float dc=max((length(q.xz*vec2(1.,1.35))-r)*.8,abs(q.y)-.62)-.03;
-  d=smin(d,dc,.34);
+/* a finger: three phalanges, each a little thinner, with soft knuckles */
+float finger(vec3 p,vec3 a,vec3 b,vec3 c,vec3 d,float r){
+  float f=smin(seg(p,a,b,r,r*.93),seg(p,b,c,r*.92,r*.86),.035);
+  return smin(f,seg(p,c,d,r*.85,r*.78),.03);}
+/* joints run base → knuckle → knuckle → tip; the fingers curl a touch toward the palm (−z) */
+const vec3 I0=vec3(-.44,.6,0.),I1=vec3(-.48,1.06,-.03),I2=vec3(-.51,1.36,-.08),I3=vec3(-.53,1.58,-.14);
+const vec3 M0=vec3(-.15,.64,0.),M1=vec3(-.15,1.15,-.03),M2=vec3(-.15,1.48,-.08),M3=vec3(-.15,1.72,-.14);
+const vec3 R0=vec3(.14,.62,0.),R1=vec3(.16,1.1,-.03),R2=vec3(.17,1.41,-.08),R3=vec3(.18,1.64,-.13);
+const vec3 L0=vec3(.41,.55,0.),L1=vec3(.45,.9,-.03),L2=vec3(.48,1.14,-.07),L3=vec3(.5,1.33,-.12);
+const vec3 T0=vec3(-.4,-.22,.02),T1=vec3(-.66,.07,.07),T2=vec3(-.85,.33,.09),T3=vec3(-.98,.54,.07);
+float dRing(vec3 p){return finger(p,R0,R1,R2,R3,.118);}
+float hand(vec3 p){
+  float d=rbox(p-vec3(0.,.16,0.),vec3(.53,.47,.1),.1);
+  /* the soft pad below the thumb and the heel of the palm */
+  d=smin(d,length((p-vec3(-.3,-.08,-.05))*vec3(1.,.8,1.6))-.26,.12);
+  d=smin(d,finger(p,I0,I1,I2,I3,.12),.08);d=smin(d,finger(p,M0,M1,M2,M3,.125),.08);
+  d=smin(d,dRing(p),.08);d=smin(d,finger(p,L0,L1,L2,L3,.103),.08);
+  d=smin(d,finger(p,T0,T1,T2,T3,.15),.1);
+  /* wrist and forearm, slightly flattened */
+  vec3 w=p;w.z*=1.55;d=smin(d,seg(w,vec3(0.,-.3,0.),vec3(0.,-3.,0.),.37,.47),.2);
   return d;}
-vec2 map(vec3 p){
-  float g=glove(p);
-  /* quilting on the back of the hand and the fingers: shallow channels in the fabric */
-  float back=smoothstep(-.02,.12,p.z),qy=abs(fract((p.y+p.x*.25)*5.2)-.5),hb=step(-.62,p.y)*step(p.y,.66);
-  g+=back*hb*.012*smoothstep(.06,0.,qy);
-  /* rib knit on the cuff */
-  float cuffZone=smoothstep(-.9,-1.05,p.y);g+=cuffZone*.006*(.5+.5*sin(atan(p.x,p.z*1.35)*46.));
-  vec2 res=vec2(g,1.);
-  /* the band: a slim strap around the wrist with a round face on the back */
-  vec3 b=p-vec3(0.,-.98,0.);vec2 t=vec2(length(b.xz*vec2(1.,1.33))-.6,b.y);float db=length(t*vec2(1.,.55))-.06;
-  vec3 f=p-vec3(0.,-.98,.47);float df=max(length(f.xy)-.2,abs(f.z)-.075)-.02;
-  db=min(db,df);if(db<res.x)res=vec2(db,2.+step(df,db+.0001));
-  return res;}
-vec3 nrm(vec3 p){const vec2 k=vec2(1.,-1.);float e=.0015;
+vec2 map(vec3 p){return vec2(hand(p),1.);}
+vec3 nrm(vec3 p){const vec2 k=vec2(1.,-1.);float e=.0012;
   return normalize(k.xyy*map(p+k.xyy*e).x+k.yyx*map(p+k.yyx*e).x+k.yxy*map(p+k.yxy*e).x+k.xxx*map(p+k.xxx*e).x);}
-float ao(vec3 p,vec3 n){float o=0.,s=1.;for(int i=1;i<5;i++){float h=.04*float(i);o+=(h-map(p+n*h).x)*s;s*=.6;}return clamp(1.-2.2*o,0.,1.);}
+float ao(vec3 p,vec3 n){float o=0.,s=1.;for(int i=1;i<5;i++){float h=.03*float(i);o+=(h-map(p+n*h).x)*s;s*=.6;}return clamp(1.-2.6*o,0.,1.);}
+float nail(vec3 p,vec3 c,vec3 d,float r){vec3 ax=normalize(d-c);vec3 q=p-(mix(c,d,.62)+vec3(0.,0.,r*.72));
+  vec3 u=normalize(cross(ax,vec3(0.,0.,1.)));return rbox(vec3(dot(q,u),dot(q,ax),q.z),vec3(r*.58,.085,.03),.03);}
 vec3 ramp(float t){t=clamp(t,0.,1.);vec3 a=vec3(.149,.176,.208),b=vec3(.114,.361,.471),c=vec3(.361,.761,.855),d=vec3(.894,.949,.965);
   return t<.35?mix(a,b,t/.35):t<.72?mix(b,c,(t-.35)/.37):mix(c,d,(t-.72)/.28);}
 void main(){
   vec2 uv=(gl_FragCoord.xy-.5*uRes)/uRes.y;
-  vec3 ro=vec3(0.,.02,5.6),rd=normalize(vec3(uv,-1.32));
-  /* turn the camera around the glove instead of the glove itself */
+  vec3 ro=vec3(0.,.5,5.6),rd=normalize(vec3(uv,-1.38));
   ro.yz*=rot(uRx);rd.yz*=rot(uRx);ro.xz*=rot(uRy);rd.xz*=rot(uRy);
+  vec3 cool=vec3(.36,.76,.86),warn=vec3(1.,.42,.15);
   float t=3.,mt=9.,minD=9.;vec2 h=vec2(9.);bool hit=false;
-  float bs=dot(ro,rd),bc=dot(ro,ro)-6.3,disc=bs*bs-bc;
-  if(disc>0.){t=max(3.,-bs-sqrt(disc));mt=-bs+sqrt(disc);
-    for(int i=0;i<96;i++){h=map(ro+rd*t);minD=min(minD,h.x);if(h.x<.0012*t){hit=true;break;}t+=h.x*.9;if(t>mt)break;}}
-  vec3 hot=vec3(.36,.76,.86),warn=vec3(1.,.42,.15);
-  if(!hit){float g=exp(-max(minD,0.)*9.)*.42;vec3 c=mix(hot,warn,uRisk*.7)*g;gl_FragColor=vec4(c,g*.9);return;}
+  float bs=dot(ro-vec3(0.,.2,0.),rd),bc=dot(ro-vec3(0.,.2,0.),ro-vec3(0.,.2,0.))-7.3,disc=bs*bs-bc;
+  if(disc>0.){t=max(2.5,-bs-sqrt(disc));mt=-bs+sqrt(disc);
+    for(int i=0;i<110;i++){h=map(ro+rd*t);minD=min(minD,h.x);if(h.x<.0009*t){hit=true;break;}t+=h.x*.9;if(t>mt)break;}}
+  if(!hit){float g=exp(-max(minD,0.)*10.)*.3;vec3 c=mix(cool,warn,uRisk*.6)*g;gl_FragColor=vec4(c,g*.9);return;}
   vec3 p=ro+rd*t,n=nrm(p),v=-rd;
-  vec3 col;float m=h.y;
-  /* skin temperature under the fabric: warm palm, cooler tips, the ring finger follows the story */
-  float tip=smoothstep(1.0,1.65,p.y);
-  float temp=.78-tip*.2;
-  float rw=exp(-max(dRing(p),0.)*22.)*smoothstep(.5,.85,p.y);
-  temp=mix(temp,uRing,rw);
-  float flow=sin(p.x*5.+uT*.5+sin(p.y*6.-uT*.4)*1.3)*sin(p.y*4.5+sin(p.z*7.+uT*.3));temp+=flow*.05;
-  vec3 L=normalize(vec3(.55,.7,.75)),L2=normalize(vec3(-.8,.2,-.6));
-  float dif=max(dot(n,L),0.),fil=max(dot(n,L2),0.),fr=pow(1.-max(dot(n,v),0.),3.),occ=ao(p,n);
-  if(m<1.5){
-    /* technical shell: deep slate nylon with a soft sheen; grippy palm; knit cuff */
-    float back=smoothstep(-.05,.1,p.z),qy=abs(fract((p.y+p.x*.25)*5.2)-.5),hb=step(-.62,p.y)*step(p.y,.66);
-    vec3 alb=mix(vec3(.075,.095,.115),vec3(.105,.13,.155),back);
-    alb*=1.-back*hb*.35*smoothstep(.05,0.,qy);
-    float grip=(1.-back)*step(-.6,p.y);
-    vec2 gq=fract(vec2(p.x*14.,p.y*14.+.5*step(.5,fract(p.x*7.))))-.5;alb=mix(alb,alb*.6,grip*smoothstep(.22,.12,length(gq)));
-    float cuffZ=smoothstep(-.9,-1.05,p.y);alb=mix(alb,vec3(.06,.075,.09),cuffZ);
-    vec3 hv=normalize(L+v);float spec=pow(max(dot(n,hv),0.),24.)*(.12+back*.18)*(1.-cuffZ*.8);
-    col=alb*(.25+1.15*dif)*occ+alb*vec3(.4,.6,.7)*fil*.5+spec*vec3(.75,.88,.95)+fr*vec3(.22,.55,.65)*.45;
-    /* heat glowing through: strongest at the fingertips, fades into the cuff */
-    vec3 th=ramp(temp);float e=(.2+.32*tip)*(1.-cuffZ*.85)*(.75+.25*fr);
-    /* sense points on each fingertip pad */
-    float sp=0.;sp+=exp(-dot(p-I2,p-I2)*60.);sp+=exp(-dot(p-M2,p-M2)*60.);sp+=exp(-dot(p-R2,p-R2)*60.);sp+=exp(-dot(p-L2,p-L2)*60.);sp+=exp(-dot(p-T2,p-T2)*60.);
-    e+=sp*uSense*.9;th=mix(th,vec3(.9,.97,1.),sp*uSense*.5);
-    float risk=uRisk*rw*(.55+.45*uPulse);
-    col=col*(1.-e*.45)+th*e;col=mix(col,warn*(.9+.5*uPulse),risk*.85);
-  }else if(m<2.5){ /* strap: matte black */
-    col=vec3(.03,.035,.04)*(.3+dif)+pow(max(dot(n,normalize(L+v)),0.),40.)*.25+fr*.06;
-    col+=warn*uBuzz*(.3+.7*uPulse)*.35;
-  }else{ /* face: dark glass with a small light */
-    vec3 f=p-vec3(0.,-.98,.47);float glass=pow(max(dot(reflect(-v,n),L),0.),60.);
-    col=vec3(.02,.03,.035)+glass*.6+fr*.1;
-    float led=exp(-dot(f.xy-vec2(0.,.11),f.xy-vec2(0.,.11))*900.);
-    col+=mix(vec3(.56,.83,.89),warn,uBuzz)*led*(1.5+uBuzz*uPulse*2.);
-    col+=mix(hot,warn,uBuzz)*smoothstep(.2,.17,length(f.xy))*smoothstep(.14,.2,length(f.xy))*.35;
-  }
-  col=pow(col,vec3(.92));
-  gl_FragColor=vec4(col,1.);}`;
+  /* skin temperature: warm palm and wrist, cold creeping down from the fingertips; the ring finger leads */
+  float creep=mix(1.5,1.02,uRing);
+  float tipCold=smoothstep(creep,creep+.42,p.y)*step(-.6,p.x+p.y*0.);
+  float thumbCold=smoothstep(.25,.6,p.y)*smoothstep(-.6,-.9,p.x);
+  float temp=.7-max(tipCold,thumbCold*.6)*mix(.16,.4,uRing);
+  float rw=exp(-max(dRing(p),0.)*24.)*smoothstep(.95,1.4,p.y);
+  temp-=rw*mix(0.,.22,uRing);
+  float flow=sin(p.x*6.+uT*.45+sin(p.y*7.-uT*.35)*1.3)*sin(p.y*5.+sin(p.z*8.+uT*.25));temp+=flow*.035;
+  vec3 L=normalize(vec3(-.5,.75,.7)),L2=normalize(vec3(.85,.15,-.5));
+  float nl=dot(n,L),wrap=max((nl+.45)/1.45,0.),dif=max(nl,0.),bk=pow(max(dot(n,L2),0.),2.),fr=pow(1.-max(dot(n,v),0.),3.),occ=ao(p,n);
+  /* skin: a cool, desaturated studio tone with soft wrap lighting and a little sheen */
+  vec3 skin=vec3(.46,.42,.42);
+  float nm=min(min(nail(p,I2,I3,.12),nail(p,M2,M3,.125)),min(nail(p,R2,R3,.118),nail(p,L2,L3,.103)));nm=min(nm,nail(p,T2,T3,.15));
+  float isNail=smoothstep(.012,0.,nm)*smoothstep(-.05,.05,n.z);
+  /* fine creases at the knuckles */
+  vec3 hv=normalize(L+v);float spec=pow(max(dot(n,hv),0.),mix(18.,70.,isNail))*mix(.07,.45,isNail);
+  vec3 lit=skin*(.18+.95*wrap)*occ+skin*vec3(.5,.7,.8)*bk*.35+spec+fr*vec3(.25,.5,.6)*.18;
+  lit=mix(lit,lit*1.12+vec3(.05),isNail*.6);
+  /* heat seen through the skin, the thermal-camera layer */
+  vec3 th=ramp(temp);
+  float e=.62+.2*fr;
+  float sp=0.;sp+=exp(-dot(p-I3,p-I3)*90.);sp+=exp(-dot(p-M3,p-M3)*90.);sp+=exp(-dot(p-R3,p-R3)*90.);sp+=exp(-dot(p-L3,p-L3)*90.);sp+=exp(-dot(p-T3,p-T3)*90.);
+  vec3 col=lit*(1.-e*.7)+th*e*(.45+.6*wrap);
+  col+=vec3(.85,.97,1.)*sp*uSense*.45;
+  float risk=uRisk*rw*(.55+.45*uPulse);
+  col=mix(col,warn*(1.1+.6*uPulse),min(1.,risk*1.1));
+  col=1.-exp(-col*1.2);
+  /* the forearm fades out below the frame */
+  float fade=smoothstep(-2.05,-1.2,p.y);
+  gl_FragColor=vec4(col*fade,fade);}
+`;
 const sh=(t,s)=>{const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))throw gl.getShaderInfoLog(o);return o};
 let pr;try{pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(pr);
-  if(!gl.getProgramParameter(pr,gl.LINK_STATUS))throw gl.getProgramInfoLog(pr)}catch(e){console.warn("glove:",e);stage.classList.add("nogl");setStep(0);return}
+  if(!gl.getProgramParameter(pr,gl.LINK_STATUS))throw gl.getProgramInfoLog(pr)}catch(e){console.warn("hand:",e);stage.classList.add("nogl");setStep(0);return}
 gl.useProgram(pr);const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
 const al=gl.getAttribLocation(pr,"a");gl.enableVertexAttribArray(al);gl.vertexAttribPointer(al,2,gl.FLOAT,false,0,0);
 const U={};["uRes","uT","uRy","uRx","uRing","uRisk","uPulse","uSense","uBuzz"].forEach(k=>U[k]=gl.getUniformLocation(pr,k));
@@ -978,13 +963,13 @@ function frame(ts){if(!on)return;raf=requestAnimationFrame(frame);const dt=ts-la
   const target=.5-p*Math.PI*1.5-drag;ry=reduce?target:lerp(ry,target,.12);
   const pulse=.5+.5*Math.sin(t*5.2);
   gl.uniform2f(U.uRes,cv.width,cv.height);gl.uniform1f(U.uT,t);gl.uniform1f(U.uRy,ry);gl.uniform1f(U.uRx,-.1+Math.sin(t*.5)*.03*k);
-  gl.uniform1f(U.uRing,lerp(.8,.3,q1));gl.uniform1f(U.uRisk,q2);gl.uniform1f(U.uPulse,pulse*k+(1-k)*.5);
+  gl.uniform1f(U.uRing,q1);gl.uniform1f(U.uRisk,q2);gl.uniform1f(U.uPulse,pulse*k+(1-k)*.5);
   gl.uniform1f(U.uSense,(1-ss(.28,.5,p)*.8)*(.8+.2*Math.sin(t*2.4)*k));gl.uniform1f(U.uBuzz,q2);
   gl.drawArrays(gl.TRIANGLES,0,3);
   const ringC=lerp(31.2,15.6,q1)-q2*1.2+Math.sin(t*.7)*.08;
   const txt=(step?ringC:31.2+Math.sin(t*.7)*.1).toFixed(1)+"°";if(txt!==shown){val.textContent=txt;shown=txt}
   rate.textContent=step===0?"":"−"+(lerp(.1,.62,q1)+q2*.2).toFixed(2)+"°C/min";
-  stage.classList.toggle("buzz",q2>.5&&!reduce)}
+}
 cv.addEventListener("webglcontextlost",e=>{e.preventDefault();stage.classList.add("nogl")});
 new IntersectionObserver(es=>{on=es[0].isIntersecting;if(on)raf=requestAnimationFrame(frame);else cancelAnimationFrame(raf)},{rootMargin:"120px"}).observe(stage);
 })();

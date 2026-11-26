@@ -592,11 +592,6 @@ function whenVisible(el,fn){let on=false,raf=0,last=0;const loop=ts=>{if(!on)ret
   let q=false;const upd=()=>{q=false;const r=sec.getBoundingClientRect();set(clamp(-r.top/(r.height-innerHeight),0,1))};
   addEventListener("scroll",()=>{if(!q){q=true;requestAnimationFrame(upd)}},{passive:true});addEventListener("resize",upd);upd()})();
 
-/* ---------- 2 · how: step text lights up as it crosses the middle of the screen (the 3D glove itself is a module below) ---------- */
-(()=>{const tx=[...document.querySelectorAll(".steps .txt")];
-  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)tx.forEach(t=>t.classList.toggle("on",t===e.target))}),{rootMargin:matchMedia("(max-width:900px)").matches?"-72% 0px -24% 0px":"-45% 0px -45% 0px"});
-  tx.forEach(t=>io.observe(t))})();
-
 /* ---------- 3 · live: thermal-camera hand ---------- */
 const cam=document.getElementById("cam"),camT=new Thermal(cam.querySelector("canvas"));
 const tags=HAND.fingers.map(f=>{const e=document.createElement("div");e.className="tag";e.style.left=f.t[0]/180*100+"%";e.style.top=(f.t[1]+OY-4)/220*100+"%";e.innerHTML="<b>31.8</b><i></i>";cam.appendChild(e);return e});
@@ -856,7 +851,7 @@ const $=id=>document.getElementById(id),cap=$("stCap"),rate=$("stRate"),who=$("s
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches,tx=[...steps.querySelectorAll(".txt")];
 const gl=cv.getContext("webgl",{antialias:false,premultipliedAlpha:true,alpha:true,powerPreference:"low-power"});
 let step=-1,shown="";
-const setStep=s=>{if(s===step)return;step=s;stage.dataset.step=s;cap.textContent=["Fingertips · live","Ring finger · trend","Alert · on the band"][s];
+const setStep=s=>{if(s===step)return;step=s;stage.dataset.step=s;tx.forEach((e,i)=>e.classList.toggle("on",i===s));cap.textContent=["Fingertips · live","Ring finger · trend","Alert · on the band"][s];
   who.textContent=s?"Ring finger":"Coldest fingertip";msg.textContent=s===2?"Your ring finger dropped 2.1°C in ten minutes. Warm it before you continue.":""};
 /* progress follows the step text: each step's centre crossing the reading line maps to 1/6, 3/6, 5/6 */
 const prog=()=>{const y=innerHeight*(innerWidth<=900?.74:.5),c=tx.map(e=>{const r=e.getBoundingClientRect();return r.top+r.height/2});
